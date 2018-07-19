@@ -2,9 +2,16 @@ package com.example.avi.ultimatespotifyplayer;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 
+import com.example.avi.ultimatespotifyplayer.pojo.Items;
+import com.example.avi.ultimatespotifyplayer.pojo.UserLibrary;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -16,9 +23,18 @@ import com.spotify.sdk.android.player.PlayerEvent;
 import com.spotify.sdk.android.player.Spotify;
 import com.spotify.sdk.android.player.SpotifyPlayer;
 
+import org.apache.commons.io.IOUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.ExecutionException;
+
 public class MainActivity extends Activity implements
-        SpotifyPlayer.NotificationCallback, ConnectionStateCallback
-{
+        SpotifyPlayer.NotificationCallback, ConnectionStateCallback {
     // TODO: Replace with your client ID
     private static final String CLIENT_ID = "6b60dd5180e84673b1b90c9346dcd908";
 
@@ -31,11 +47,14 @@ public class MainActivity extends Activity implements
 
     private String token = "";
 
+    TextView textView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // The only thing that's different is we added the 5 lines below.
+        textView = (TextView) findViewById(R.id.textView1);
         AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
         builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
         AuthenticationRequest request = builder.build();
@@ -103,6 +122,22 @@ public class MainActivity extends Activity implements
         //First thing we want to do is to get all of the songs for the user given.
 
 
+        try {
+            //Some url endpoint that you may have
+            String myUrl = "https://api.spotify.com/v1/me/tracks";
+            //String to place our result in
+            String result;
+            //Instantiate new instance of our class
+            HttpGetRequest getRequest = new HttpGetRequest();
+            //Perform the doInBackground method, passing in our url
+            result = getRequest.execute(myUrl).get();
+        } catch (InterruptedException e) {
+            Log.e("MainActivity", e.toString());
+        } catch (ExecutionException e) {
+            Log.e("MainActivity", e.toString());
+        }
+
+
     }
 
     @Override
@@ -123,5 +158,74 @@ public class MainActivity extends Activity implements
     @Override
     public void onConnectionMessage(String message) {
         Log.d("MainActivity", "Received connection message: " + message);
+    }
+
+    public class HttpGetRequest extends AsyncTask<String, Void, String> {
+        public static final String REQUEST_METHOD = "GET";
+        public static final int READ_TIMEOUT = 15000;
+        public static final int CONNECTION_TIMEOUT = 15000;
+
+        @Override
+        protected String doInBackground(String... params) {
+            String stringUrl = params[0];
+            String result = "NO CONNECTION MADE";
+
+
+            try {
+                //Create a URL object holding our url
+                URL myUrl = new URL(stringUrl);
+                //Create a connection
+                HttpURLConnection connection = (HttpURLConnection)
+                        myUrl.openConnection();
+
+                //Set methods and timeouts
+                connection.setRequestMethod(REQUEST_METHOD);
+                connection.setReadTimeout(READ_TIMEOUT);
+                connection.setConnectTimeout(CONNECTION_TIMEOUT);
+
+                connection.setRequestProperty("Authorization", "Bearer " + token);
+                connection.setRequestProperty("Accept", "application/json");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestMethod("GET");
+
+                //Connect to our url
+                connection.connect();
+
+                if (connection.getResponseCode() == 200) {
+                    InputStream responseBody = connection.getInputStream();
+                    InputStreamReader responseBodyReader =
+                            new InputStreamReader(responseBody, "UTF-8");
+
+
+                    //Create object mapper object and map JSON that is retrieved into an Arraylist of POJO we created called Music_Results
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    //If property is unknown, mark it as ok so application does not crash
+                    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                    objectMapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
+
+
+                    UserLibrary userLibrary = objectMapper.readValue(responseBodyReader, UserLibrary.class);
+                    result = "";
+                    for(Items item : userLibrary.getItems()){
+                        result+= item.getTrack().getName() + "\n\n";
+                    }
+                    return result;
+
+                } else {
+                    return result;
+                }
+            } catch (IOException e) {
+                Log.e("MainActivity", e.toString());
+            }
+
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            textView.setText(result);
+        }
     }
 }
