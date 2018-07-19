@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:padding="8dp"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/textViewSongName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:ellipsize="end"
+        android:textAllCaps="true"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:text="Song Name"
+        android:textColor="#000000"
+        android:fontFamily="sans-serif-condensed"
+        android:textSize="24dp" />
+
+    <TextView
+        android:id="@+id/textViewArtistName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="61dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textStyle="italic"
+        android:text="Artist Name"
+        android:fontFamily="sans-serif-condensed"
+        android:textSize="18dp" />
+
+    <TextView
+        android:id="@+id/textViewAlbumName"
+        android:layout_width="196dp"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/textViewArtistName"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="61dp"
+        android:ellipsize="end"
+        android:fontFamily="sans-serif-condensed"
+        android:maxLines="1"
+        android:text="Album Name"
+        android:textSize="18dp"
+        android:textStyle="italic" />
+
+
+</RelativeLayout>

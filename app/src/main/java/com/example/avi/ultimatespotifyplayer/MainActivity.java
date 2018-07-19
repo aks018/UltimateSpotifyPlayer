@@ -5,9 +5,13 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.avi.ultimatespotifyplayer.adapter.SongBaseAdapter;
 import com.example.avi.ultimatespotifyplayer.pojo.Items;
+import com.example.avi.ultimatespotifyplayer.pojo.Song;
+import com.example.avi.ultimatespotifyplayer.pojo.Track;
 import com.example.avi.ultimatespotifyplayer.pojo.UserLibrary;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -31,6 +35,8 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends Activity implements
@@ -47,14 +53,20 @@ public class MainActivity extends Activity implements
 
     private String token = "";
 
-    TextView textView;
+    ArrayList<Song> songList;
+
+    SongBaseAdapter songBaseAdapter;
+
+    ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // The only thing that's different is we added the 5 lines below.
-        textView = (TextView) findViewById(R.id.textView1);
+        listView = (ListView) findViewById(R.id.songListView);
+        songList = new ArrayList<>();
+
         AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
         builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
         AuthenticationRequest request = builder.build();
@@ -120,8 +132,6 @@ public class MainActivity extends Activity implements
         //mPlayer.playUri(null, "spotify:track:2TpxZ7JUBn3uw46aR7qd6V", 0, 0);
 
         //First thing we want to do is to get all of the songs for the user given.
-
-
         try {
             //Some url endpoint that you may have
             String myUrl = "https://api.spotify.com/v1/me/tracks";
@@ -205,11 +215,20 @@ public class MainActivity extends Activity implements
 
 
                     UserLibrary userLibrary = objectMapper.readValue(responseBodyReader, UserLibrary.class);
-                    result = "";
-                    for(Items item : userLibrary.getItems()){
-                        result+= item.getTrack().getName() + "\n\n";
+
+                    for (Items item : userLibrary.getItems()) {
+                        Song song = new Song();
+                        Track track = item.getTrack();
+                        song.setAlbum(track.getAlbum().getName());
+                        song.setReleaseDate(track.getAlbum().getRelease_date());
+                        song.setArtist(track.getArtists());
+                        song.setTrackValue(track.getUri());
+                        song.setTrackName(track.getName());
+
+                        songList.add(song);
                     }
-                    return result;
+
+                    return userLibrary.getNext();
 
                 } else {
                     return result;
@@ -225,7 +244,26 @@ public class MainActivity extends Activity implements
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            textView.setText(result);
+            if (result == null || result.equals("null")) {
+                songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
+                listView.setAdapter(songBaseAdapter);
+            }
+
+            else
+            {
+                try {
+                    //Some url endpoint that you may have
+                    String myUrl = result;
+                    //Instantiate new instance of our class
+                    HttpGetRequest getRequest = new HttpGetRequest();
+                    //Perform the doInBackground method, passing in our url
+                    getRequest.execute(myUrl).get();
+                } catch (InterruptedException e) {
+                    Log.e("MainActivity", e.toString());
+                } catch (ExecutionException e) {
+                    Log.e("MainActivity", e.toString());
+                }
+            }
         }
     }
 }
