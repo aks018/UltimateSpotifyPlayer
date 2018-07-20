@@ -5,8 +5,12 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.avi.ultimatespotifyplayer.adapter.SongBaseAdapter;
 import com.example.avi.ultimatespotifyplayer.pojo.Items;
@@ -59,13 +63,28 @@ public class MainActivity extends Activity implements
 
     ListView listView;
 
+    ProgressBar progressBar;
+
+    TextView loading;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // The only thing that's different is we added the 5 lines below.
         listView = (ListView) findViewById(R.id.songListView);
+        progressBar = (ProgressBar) findViewById(R.id.secondBar);
+        loading = (TextView) findViewById(R.id.loadingTextView);
         songList = new ArrayList<>();
+
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Song song = songList.get(position);
+                mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+            }
+        });
 
         AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
         builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
@@ -176,6 +195,12 @@ public class MainActivity extends Activity implements
         public static final int CONNECTION_TIMEOUT = 15000;
 
         @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressBar.setVisibility(View.VISIBLE);
+        }
+
+        @Override
         protected String doInBackground(String... params) {
             String stringUrl = params[0];
             String result = "NO CONNECTION MADE";
@@ -245,6 +270,8 @@ public class MainActivity extends Activity implements
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
             if (result == null || result.equals("null")) {
+                progressBar.setVisibility(View.INVISIBLE);
+                loading.setVisibility(View.INVISIBLE);
                 songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
                 listView.setAdapter(songBaseAdapter);
             }

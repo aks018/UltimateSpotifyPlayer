@@ -68,13 +68,12 @@ public class SongBaseAdapter extends BaseAdapter{
         Song songObject = songArrayList.get(position);
 
         holder.trackName.setText(songObject.getTrackName());
-        String artists = "";
+        StringBuilder artists = new StringBuilder();
         for(Artists artist : songObject.getArtist())
         {
-            artists += artist.getName() + ", ";
+            artists.append(artist.getName() + ", ");
         }
-        artists.replace(artists.charAt(artists.length()-1), ' ');
-        holder.artistName.setText(artists);
+        holder.artistName.setText(artists.toString().replaceAll(", $", ""));
         holder.albumName.setText(songObject.getAlbum());
 
         //Finally return rowView holding the layout for the music listview items
