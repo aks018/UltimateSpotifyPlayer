@@ -7,12 +7,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.avi.ultimatespotifyplayer.adapter.SongBaseAdapter;
+import com.example.avi.ultimatespotifyplayer.pojo.Album;
+import com.example.avi.ultimatespotifyplayer.pojo.Images;
 import com.example.avi.ultimatespotifyplayer.pojo.Items;
 import com.example.avi.ultimatespotifyplayer.pojo.Song;
 import com.example.avi.ultimatespotifyplayer.pojo.Track;
@@ -30,17 +33,14 @@ import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.PlayerEvent;
 import com.spotify.sdk.android.player.Spotify;
 import com.spotify.sdk.android.player.SpotifyPlayer;
-
-import org.apache.commons.io.IOUtils;
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends Activity implements
@@ -65,33 +65,76 @@ public class MainActivity extends Activity implements
 
     ProgressBar progressBar;
 
-    TextView loading;
+    TextView mSelectedTrackTitle;
+    ImageView mSelectedTrackImage;
+    private ImageView mPlayerControl;
+
+    static int currentSelected = 0;
+
+    boolean pause;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // The only thing that's different is we added the 5 lines below.
+
+        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
+        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
+        AuthenticationRequest request = builder.build();
+        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+
         listView = (ListView) findViewById(R.id.songListView);
         progressBar = (ProgressBar) findViewById(R.id.secondBar);
-        loading = (TextView) findViewById(R.id.loadingTextView);
         songList = new ArrayList<>();
+        mSelectedTrackTitle = (TextView) findViewById(R.id.selected_track_title);
+        mSelectedTrackImage = (ImageView) findViewById(R.id.selected_track_image);
+        mPlayerControl = (ImageView) findViewById(R.id.player_control);
+        pause = true;
+        mPlayerControl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (pause) {
+                    mPlayer.pause(new Player.OperationCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Log.i("MainActivity", "Paused Player");
+                        }
 
+                        @Override
+                        public void onError(Error error) {
+                            Log.e("MainActivity", error.toString());
+                        }
+                    });
+                }
+                else
+                {
+                    mPlayer.resume(new Player.OperationCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Log.i("MainActivity", "Paused Player");
+                        }
+
+                        @Override
+                        public void onError(Error error) {
+                            Log.e("MainActivity", "Unable to play song.");
+                        }
+                    });
+                }
+            }
+        });
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Song song = songList.get(position);
+                mSelectedTrackTitle.setText(song.getTrackName());
+                Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+                currentSelected = position;
                 mPlayer.playUri(null, song.getTrackValue(), 0, 0);
             }
         });
-
-        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
-        AuthenticationRequest request = builder.build();
-
-        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -130,6 +173,31 @@ public class MainActivity extends Activity implements
         Log.d("MainActivity", "Playback event received: " + playerEvent.name());
         switch (playerEvent) {
             // Handle event type as necessary
+            case kSpPlaybackNotifyPlay:
+                pause = true;
+                mPlayerControl.setImageResource(R.drawable.baseline_pause_24);
+                break;
+            case kSpPlaybackNotifyPause:
+                pause = false;
+                mPlayerControl.setImageResource(R.drawable.baseline_play_arrow_24);
+                break;
+            case kSpPlaybackNotifyAudioDeliveryDone:
+                int newPosition = currentSelected + 1;
+                if (newPosition <= songList.size() - 1) {
+                    Song song = songList.get(newPosition);
+                    mSelectedTrackTitle.setText(song.getTrackName());
+                    Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+                    currentSelected = newPosition;
+                    mPlayer.refreshCache();
+                    mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                } else {
+                    currentSelected = 0;
+                    Song song = songList.get(currentSelected);
+                    mSelectedTrackTitle.setText(song.getTrackName());
+                    Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+                    mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                }
+                break;
             default:
                 break;
         }
@@ -148,7 +216,6 @@ public class MainActivity extends Activity implements
     @Override
     public void onLoggedIn() {
         Log.d("MainActivity", "User logged in");
-        //mPlayer.playUri(null, "spotify:track:2TpxZ7JUBn3uw46aR7qd6V", 0, 0);
 
         //First thing we want to do is to get all of the songs for the user given.
         try {
@@ -245,6 +312,8 @@ public class MainActivity extends Activity implements
                         Song song = new Song();
                         Track track = item.getTrack();
                         song.setAlbum(track.getAlbum().getName());
+                        Album album = track.getAlbum();
+                        song.setAlbumImage(album.getImages()[0].getUrl());
                         song.setReleaseDate(track.getAlbum().getRelease_date());
                         song.setArtist(track.getArtists());
                         song.setTrackValue(track.getUri());
@@ -271,13 +340,9 @@ public class MainActivity extends Activity implements
             super.onPostExecute(result);
             if (result == null || result.equals("null")) {
                 progressBar.setVisibility(View.INVISIBLE);
-                loading.setVisibility(View.INVISIBLE);
                 songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
                 listView.setAdapter(songBaseAdapter);
-            }
-
-            else
-            {
+            } else {
                 try {
                     //Some url endpoint that you may have
                     String myUrl = result;

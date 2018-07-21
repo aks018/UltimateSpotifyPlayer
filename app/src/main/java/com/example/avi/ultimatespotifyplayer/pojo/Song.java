@@ -6,6 +6,7 @@ public class Song {
     String trackValue;
     String album;
     String releaseDate;
+    String albumImage;
 
     public Artists[] getArtist() {
         return artist;
@@ -45,5 +46,13 @@ public class Song {
 
     public void setReleaseDate(String releaseDate) {
         this.releaseDate = releaseDate;
+    }
+
+    public String getAlbumImage() {
+        return albumImage;
+    }
+
+    public void setAlbumImage(String albumImage) {
+        this.albumImage = albumImage;
     }
 }
