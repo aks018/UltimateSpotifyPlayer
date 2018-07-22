@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -77,6 +78,8 @@ public class MainActivity extends Activity implements
 
     boolean pause;
 
+    SearchView searchView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -128,7 +131,7 @@ public class MainActivity extends Activity implements
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Song song = songList.get(position);
+                Song song = (Song) parent.getItemAtPosition(position);
                 StringBuilder artists = new StringBuilder();
                 for (Artists artist : song.getArtist()) {
                     artists.append(artist.getName() + ", ");
@@ -140,22 +143,46 @@ public class MainActivity extends Activity implements
             }
         });
 
+        searchView = (SearchView) findViewById(R.id.searchView);
 
+        searchView.setActivated(true);
+        searchView.setQueryHint("Find");
+        searchView.onActionViewExpanded();
+        searchView.setIconified(false);
+        searchView.clearFocus();
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if(songBaseAdapter!=null) {
+                    songBaseAdapter.getFilter().filter(newText);
+                    return false;
+                }
+                else{
+                    return false;
+                }
+            }
+        });
     }
 
-    @Override
+    /*@Override
     protected void onResume() {
         super.onResume();
         if (mPlayer != null) {
             mPlayer.resume(new Player.OperationCallback() {
                 @Override
                 public void onSuccess() {
-
+                    Log.d("MainActivity", "Able to play the player");
                 }
 
                 @Override
                 public void onError(Error error) {
-
+                    Log.i("MainActivity", "Not able to play the player");
                 }
             });
         }
@@ -168,16 +195,16 @@ public class MainActivity extends Activity implements
             mPlayer.pause(new Player.OperationCallback() {
                 @Override
                 public void onSuccess() {
-
+                    Log.i("MainActivity", "Able to pause the player");
                 }
 
                 @Override
                 public void onError(Error error) {
-
+                    Log.i("MainActivity", "Not able to pause the player");
                 }
             });
         }
-    }
+    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
