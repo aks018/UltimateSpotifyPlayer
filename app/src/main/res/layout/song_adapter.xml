@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical" android:layout_width="match_parent"
     android:padding="8dp"
     android:background="#b7b0b0"
-
     android:layout_height="match_parent">
 
     <TextView
@@ -14,9 +14,11 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:ellipsize="end"
+        android:layout_toRightOf="@id/viewMusicVideo"
         android:fontFamily="sans-serif-condensed"
         android:maxLines="1"
         android:text="Song Name"
+        android:layout_toLeftOf="@id/viewMusicVideo"
         android:textAllCaps="true"
         android:textColor="#395b9f"
         android:textSize="18dp"
@@ -33,7 +35,8 @@
         android:maxLines="1"
         android:text="Artist Name"
         android:textSize="16dp"
-        android:textStyle="italic" />
+        android:textStyle="italic"
+        />
 
     <TextView
         android:id="@+id/textViewAlbumName"
@@ -42,6 +45,7 @@
         android:layout_alignTop="@+id/textViewArtistName"
         android:layout_toEndOf="@+id/textView2"
         android:layout_toRightOf="@id/textView2"
+        android:layout_toLeftOf="@+id/viewMusicVideo"
         android:ellipsize="end"
         android:fontFamily="sans-serif-condensed"
         android:maxLines="1"
@@ -64,6 +68,18 @@
         android:layout_marginRight="5dp"
         android:textSize="16dp"
         android:textStyle="italic" />
+
+    <ImageView
+        android:id="@+id/viewMusicVideo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_marginLeft="3.5dp"
+        android:layout_marginRight="3.5dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:onClick="showYoutubeVideo"
+        app:srcCompat="@drawable/baseline_arrow_forward_ios_24" />
 
 
 </RelativeLayout>

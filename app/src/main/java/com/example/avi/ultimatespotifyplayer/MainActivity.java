@@ -1,7 +1,9 @@
 package com.example.avi.ultimatespotifyplayer;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,7 +16,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.avi.ultimatespotifyplayer.adapter.SongBaseAdapter;
+import com.example.avi.ultimatespotifyplayer.notification.NotificationGenerator;
 import com.example.avi.ultimatespotifyplayer.pojo.Album;
+import com.example.avi.ultimatespotifyplayer.pojo.Artists;
 import com.example.avi.ultimatespotifyplayer.pojo.Images;
 import com.example.avi.ultimatespotifyplayer.pojo.Items;
 import com.example.avi.ultimatespotifyplayer.pojo.Song;
@@ -105,9 +109,7 @@ public class MainActivity extends Activity implements
                             Log.e("MainActivity", error.toString());
                         }
                     });
-                }
-                else
-                {
+                } else {
                     mPlayer.resume(new Player.OperationCallback() {
                         @Override
                         public void onSuccess() {
@@ -127,14 +129,55 @@ public class MainActivity extends Activity implements
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Song song = songList.get(position);
-                mSelectedTrackTitle.setText(song.getTrackName());
+                StringBuilder artists = new StringBuilder();
+                for (Artists artist : song.getArtist()) {
+                    artists.append(artist.getName() + ", ");
+                }
+                mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + artists.toString().replaceAll(", $", ""));
                 Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
                 currentSelected = position;
                 mPlayer.playUri(null, song.getTrackValue(), 0, 0);
             }
         });
+
+
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mPlayer != null) {
+            mPlayer.resume(new Player.OperationCallback() {
+                @Override
+                public void onSuccess() {
+
+                }
+
+                @Override
+                public void onError(Error error) {
+
+                }
+            });
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mPlayer != null) {
+            mPlayer.pause(new Player.OperationCallback() {
+                @Override
+                public void onSuccess() {
+
+                }
+
+                @Override
+                public void onError(Error error) {
+
+                }
+            });
+        }
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -173,6 +216,7 @@ public class MainActivity extends Activity implements
         Log.d("MainActivity", "Playback event received: " + playerEvent.name());
         switch (playerEvent) {
             // Handle event type as necessary
+
             case kSpPlaybackNotifyPlay:
                 pause = true;
                 mPlayerControl.setImageResource(R.drawable.baseline_pause_24);
@@ -181,11 +225,16 @@ public class MainActivity extends Activity implements
                 pause = false;
                 mPlayerControl.setImageResource(R.drawable.baseline_play_arrow_24);
                 break;
+
             case kSpPlaybackNotifyAudioDeliveryDone:
                 int newPosition = currentSelected + 1;
                 if (newPosition <= songList.size() - 1) {
                     Song song = songList.get(newPosition);
-                    mSelectedTrackTitle.setText(song.getTrackName());
+                    StringBuilder artists = new StringBuilder();
+                    for (Artists artist : song.getArtist()) {
+                        artists.append(artist.getName() + ", ");
+                    }
+                    mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + artists.toString().replaceAll(", $", ""));
                     Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
                     currentSelected = newPosition;
                     mPlayer.refreshCache();
@@ -193,7 +242,11 @@ public class MainActivity extends Activity implements
                 } else {
                     currentSelected = 0;
                     Song song = songList.get(currentSelected);
-                    mSelectedTrackTitle.setText(song.getTrackName());
+                    StringBuilder artists = new StringBuilder();
+                    for (Artists artist : song.getArtist()) {
+                        artists.append(artist.getName() + ", ");
+                    }
+                    mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + artists.toString().replaceAll(", $", ""));
                     Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
                     mPlayer.playUri(null, song.getTrackValue(), 0, 0);
                 }
@@ -255,6 +308,7 @@ public class MainActivity extends Activity implements
     public void onConnectionMessage(String message) {
         Log.d("MainActivity", "Received connection message: " + message);
     }
+
 
     public class HttpGetRequest extends AsyncTask<String, Void, String> {
         public static final String REQUEST_METHOD = "GET";

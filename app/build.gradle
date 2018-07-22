@@ -54,4 +54,16 @@ dependencies {
 
     implementation "commons-io:commons-io:+"
 
+    implementation 'com.google.android.gms:play-services-auth:15.0.1'
+    implementation 'pub.devrel:easypermissions:0.3.0'
+    implementation('com.google.api-client:google-api-client-android:1.23.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
+    implementation('com.google.apis:google-api-services-youtube:v3-rev204-1.23.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
+
+    implementation files('libs/YouTubeAndroidPlayerApi.jar')
+
+
 }
