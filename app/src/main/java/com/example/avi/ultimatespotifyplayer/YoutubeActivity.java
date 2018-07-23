@@ -1,15 +1,32 @@
 package com.example.avi.ultimatespotifyplayer;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.avi.ultimatespotifyplayer.config.YoutubeConfig;
+import com.example.avi.ultimatespotifyplayer.youtubepojo.Id;
+import com.example.avi.ultimatespotifyplayer.youtubepojo.RetrieveResults;
+import com.example.avi.ultimatespotifyplayer.youtubepojo.YoutubeItems;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayer.Provider;
 import com.google.android.youtube.player.YouTubePlayerView;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.ExecutionException;
 
 public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlayer.OnInitializedListener {
 
@@ -19,16 +36,38 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
     private MyPlayerStateChangeListener playerStateChangeListener;
     private MyPlaybackEventListener playbackEventListener;
 
+    ProgressBar progressBar;
+
+    String videoID = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_youtube);
 
-        youTubeView = (YouTubePlayerView) findViewById(R.id.youtube_view);
-        youTubeView.initialize(YoutubeConfig.YOUTUBE_API_KEY, this);
+        progressBar = (ProgressBar) findViewById(R.id.resultProgressBar);
 
-        playerStateChangeListener = new MyPlayerStateChangeListener();
-        playbackEventListener = new MyPlaybackEventListener();
+        Bundle extras = getIntent().getExtras();
+        String query = (String) extras.get("query");
+
+        try {
+            //Some url endpoint that you may have
+            String myUrl = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1" +
+                    "&q=" + query +
+                    "&type=video" +
+                    "&key=" + YoutubeConfig.YOUTUBE_API_KEY;
+
+            //String to place our result in
+            String result;
+            //Instantiate new instance of our class
+            HttpGetRequest getRequest = new HttpGetRequest();
+            //Perform the doInBackground method, passing in our url
+            result = getRequest.execute(myUrl).get();
+        } catch (InterruptedException e) {
+            Log.e("MainActivity", e.toString());
+        } catch (ExecutionException e) {
+            Log.e("MainActivity", e.toString());
+        }
     }
 
     @Override
@@ -37,7 +76,7 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
         player.setPlaybackEventListener(playbackEventListener);
 
         if (!wasRestored) {
-            player.cueVideo("H1KBHFXm2Bg"); // Plays https://www.youtube.com/watch?v=fhWaJi1Hsfo
+            player.cueVideo(videoID); // Plays https://www.youtube.com/watch?v=fhWaJi1Hsfo
         }
     }
 
@@ -63,9 +102,9 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
         return youTubeView;
     }
 
-    private void showMessage(String message) {
+   /* private void showMessage(String message) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-    }
+    }*/
 
 
     private final class MyPlaybackEventListener implements YouTubePlayer.PlaybackEventListener {
@@ -73,19 +112,19 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
         @Override
         public void onPlaying() {
             // Called when playback starts, either due to user action or call to play().
-            showMessage("Playing");
+            //showMessage("Playing");
         }
 
         @Override
         public void onPaused() {
             // Called when playback is paused, either due to user action or call to pause().
-            showMessage("Paused");
+            //showMessage("Paused");
         }
 
         @Override
         public void onStopped() {
             // Called when playback stops for a reason other than being paused.
-            showMessage("Stopped");
+            //showMessage("Stopped");
         }
 
         @Override
@@ -132,6 +171,92 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
         @Override
         public void onError(YouTubePlayer.ErrorReason errorReason) {
             // Called when an error occurs.
+        }
+    }
+
+    public class HttpGetRequest extends AsyncTask<String, Void, String> {
+        public static final String REQUEST_METHOD = "GET";
+        public static final int READ_TIMEOUT = 15000;
+        public static final int CONNECTION_TIMEOUT = 15000;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressBar.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String stringUrl = params[0];
+            String result = "NO CONNECTION MADE";
+
+
+            try {
+                //Create a URL object holding our url
+                URL myUrl = new URL(stringUrl);
+                //Create a connection
+                HttpURLConnection connection = (HttpURLConnection)
+                        myUrl.openConnection();
+
+                //Set methods and timeouts
+                connection.setRequestMethod(REQUEST_METHOD);
+                connection.setReadTimeout(READ_TIMEOUT);
+                connection.setConnectTimeout(CONNECTION_TIMEOUT);
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestMethod("GET");
+
+                //Connect to our url
+                connection.connect();
+
+                if (connection.getResponseCode() == 200) {
+                    InputStream responseBody = connection.getInputStream();
+                    InputStreamReader responseBodyReader =
+                            new InputStreamReader(responseBody, "UTF-8");
+
+
+                    //Create object mapper object and map JSON that is retrieved into an Arraylist of POJO we created called Music_Results
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    //If property is unknown, mark it as ok so application does not crash
+                    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                    objectMapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
+
+                    RetrieveResults retrieveResults = objectMapper.readValue(responseBodyReader, RetrieveResults.class);
+
+                    YoutubeItems[] youtubeItemsArr = retrieveResults.getItems();
+                    String videoId = "";
+                    for (YoutubeItems youtubeItems : youtubeItemsArr) {
+                        Id id = youtubeItems.getId();
+                        videoId = id.getVideoId();
+                    }
+                    return videoId;
+                } else {
+                    return result;
+                }
+            } catch (IOException e) {
+                Log.e("YoutubeResults", e.toString());
+            }
+
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            if (result != null || result.equals("NO CONNECTION MADE")) {
+                progressBar.setVisibility(View.INVISIBLE);
+
+                videoID = result;
+
+                youTubeView = (YouTubePlayerView) findViewById(R.id.youtube_view);
+                youTubeView.initialize(YoutubeConfig.YOUTUBE_API_KEY, YoutubeActivity.this);
+
+                playerStateChangeListener = new MyPlayerStateChangeListener();
+                playbackEventListener = new MyPlaybackEventListener();
+            } else {
+                Toast.makeText(getApplicationContext(), "No Connection Made", Toast.LENGTH_LONG).show();
+            }
+
         }
     }
 }

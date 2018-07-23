@@ -91,6 +91,7 @@ public class MainActivity extends Activity implements
         AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
 
         listView = (ListView) findViewById(R.id.songListView);
+        listView.setScrollingCacheEnabled(false);
         progressBar = (ProgressBar) findViewById(R.id.secondBar);
         songList = new ArrayList<>();
         mSelectedTrackTitle = (TextView) findViewById(R.id.selected_track_title);
@@ -132,11 +133,7 @@ public class MainActivity extends Activity implements
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Song song = (Song) parent.getItemAtPosition(position);
-                StringBuilder artists = new StringBuilder();
-                for (Artists artist : song.getArtist()) {
-                    artists.append(artist.getName() + ", ");
-                }
-                mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + artists.toString().replaceAll(", $", ""));
+                mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
                 Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
                 currentSelected = position;
                 mPlayer.playUri(null, song.getTrackValue(), 0, 0);
@@ -159,11 +156,10 @@ public class MainActivity extends Activity implements
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                if(songBaseAdapter!=null) {
+                if (songBaseAdapter != null) {
                     songBaseAdapter.getFilter().filter(newText);
                     return false;
-                }
-                else{
+                } else {
                     return false;
                 }
             }
@@ -256,24 +252,16 @@ public class MainActivity extends Activity implements
             case kSpPlaybackNotifyAudioDeliveryDone:
                 int newPosition = currentSelected + 1;
                 if (newPosition <= songList.size() - 1) {
-                    Song song = songList.get(newPosition);
-                    StringBuilder artists = new StringBuilder();
-                    for (Artists artist : song.getArtist()) {
-                        artists.append(artist.getName() + ", ");
-                    }
-                    mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + artists.toString().replaceAll(", $", ""));
+                    Song song = (Song) listView.getAdapter().getItem(newPosition);
+                    mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
                     Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
                     currentSelected = newPosition;
                     mPlayer.refreshCache();
                     mPlayer.playUri(null, song.getTrackValue(), 0, 0);
                 } else {
                     currentSelected = 0;
-                    Song song = songList.get(currentSelected);
-                    StringBuilder artists = new StringBuilder();
-                    for (Artists artist : song.getArtist()) {
-                        artists.append(artist.getName() + ", ");
-                    }
-                    mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + artists.toString().replaceAll(", $", ""));
+                    Song song = (Song) listView.getAdapter().getItem(currentSelected);
+                    mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
                     Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
                     mPlayer.playUri(null, song.getTrackValue(), 0, 0);
                 }
@@ -396,7 +384,12 @@ public class MainActivity extends Activity implements
                         Album album = track.getAlbum();
                         song.setAlbumImage(album.getImages()[0].getUrl());
                         song.setReleaseDate(track.getAlbum().getRelease_date());
-                        song.setArtist(track.getArtists());
+                        StringBuilder artists = new StringBuilder();
+                        for (Artists artist : track.getArtists()) {
+                            artists.append(artist.getName() + ", ");
+                        }
+                        final String allArtists = artists.toString().replaceAll(", $", "");
+                        song.setArtist(allArtists);
                         song.setTrackValue(track.getUri());
                         song.setTrackName(track.getName());
 

@@ -13,7 +13,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.avi.ultimatespotifyplayer.MainActivity;
 import com.example.avi.ultimatespotifyplayer.R;
 import com.example.avi.ultimatespotifyplayer.YoutubeActivity;
 import com.example.avi.ultimatespotifyplayer.pojo.Artists;
@@ -86,27 +85,19 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable {
         holder.albumName = (TextView) rowView.findViewById(R.id.textViewAlbumName);
         holder.youtubeVideo = (ImageView) rowView.findViewById(R.id.viewMusicVideo);
 
-
         //Store the music object from the position within the arraylist
         final Song songObject = mData.get(position);
 
         holder.trackName.setText(songObject.getTrackName());
-        StringBuilder artists = new StringBuilder();
-        for (Artists artist : songObject.getArtist()) {
-            artists.append(artist.getName() + ", ");
-        }
-        holder.artistName.setText(artists.toString().replaceAll(", $", ""));
+        holder.artistName.setText(songObject.getArtist());
         holder.albumName.setText(songObject.getAlbum());
         holder.youtubeVideo.setImageResource(R.drawable.baseline_arrow_forward_ios_24);
 
         holder.youtubeVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "artist: " + songObject.getArtist());
-                Log.d(TAG, "track: " + songObject.getTrackName());
-                Toast.makeText(parent.getContext(), "button clicked: " + songObject.getTrackName(), Toast.LENGTH_SHORT).show();
-
                 Intent intent = new Intent(context, YoutubeActivity.class);
+                intent.putExtra("query", songObject.getArtist() + " - " + songObject.getTrackName() + " Music Video");
                 context.startActivity(intent);
 
             }
@@ -132,15 +123,10 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable {
                         filterList.add(song);
                         continue;
                     }
-                    StringBuilder artists = new StringBuilder();
-                    for (Artists artist : song.getArtist()) {
-                        artists.append(artist.getName() + ", ");
-                    }
-                    if (artists.toString().toLowerCase().contains(constraint.toString().toLowerCase()) && !constraint.equals(",")) {
+                    if (song.getArtist().toString().toLowerCase().contains(constraint.toString().toLowerCase()) && !constraint.equals(",")) {
                         filterList.add(song);
                         continue;
                     }
-
                 }
                 results.count = filterList.size();
                 results.values = filterList;

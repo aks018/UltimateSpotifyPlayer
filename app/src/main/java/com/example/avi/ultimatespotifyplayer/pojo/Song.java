@@ -1,18 +1,18 @@
 package com.example.avi.ultimatespotifyplayer.pojo;
 
 public class Song {
-    Artists[] artist;
+    String artist;
     String trackName;
     String trackValue;
     String album;
     String releaseDate;
     String albumImage;
 
-    public Artists[] getArtist() {
+    public String getArtist() {
         return artist;
     }
 
-    public void setArtist(Artists[] artist) {
+    public void setArtist(String artist) {
         this.artist = artist;
     }
 

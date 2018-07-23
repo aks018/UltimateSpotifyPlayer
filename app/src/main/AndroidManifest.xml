@@ -32,7 +32,10 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".YoutubeActivity"></activity>
+        <activity
+            android:name=".YoutubeActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
+
     </application>
 
 </manifest>
