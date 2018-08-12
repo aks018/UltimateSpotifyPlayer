@@ -3,8 +3,8 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 27
     defaultConfig {
-        applicationId "com.example.avi.ultimatespotifyplayer"
-        minSdkVersion 15
+        applicationId "aviee.develop.music.ultimatespotifyplayer"
+        minSdkVersion 17
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
@@ -13,6 +13,12 @@ android {
         multiDexEnabled true
 
     }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -54,6 +60,8 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.5.2'
 
     implementation "commons-io:commons-io:+"
+    implementation 'com.android.volley:volley:1.0.0'
+
 
     implementation 'com.google.android.gms:play-services-auth:15.0.1'
     implementation 'pub.devrel:easypermissions:0.3.0'

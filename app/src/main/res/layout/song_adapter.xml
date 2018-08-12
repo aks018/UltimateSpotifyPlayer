@@ -78,8 +78,8 @@
         android:layout_marginRight="3.5dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:onClick="showYoutubeVideo"
-        app:srcCompat="@drawable/baseline_arrow_forward_ios_24" />
+        android:onClick="dropDownMenu"
+        app:srcCompat="@drawable/ic_three_dots" />
 
 
 </RelativeLayout>

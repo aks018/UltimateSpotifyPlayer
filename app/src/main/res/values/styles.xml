@@ -6,6 +6,18 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:popupMenuStyle">@style/PopupMenu</item>
+        <item name="android:itemTextAppearance">@style/MenuItemTextAppearance</item>
     </style>
+
+    <style name="PopupMenu" parent="@android:style/Widget.PopupMenu">
+        <item name="android:popupBackground">#3d3c3c</item>
+    </style>
+
+    <style name="MenuItemTextAppearance">
+        <item name="android:textColor">#fff</item>
+        <item name="android:textAlignment">center</item>
+    </style>
+
 
 </resources>
