@@ -6,18 +6,38 @@
     android:layout_height="match_parent"
     android:background="#b7b0b0"
     tools:context=".MainActivity">
+
     <RelativeLayout
-        android:layout_width="wrap_content"
         android:id="@+id/relativeLayoutSearchView"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-    <android.support.v7.widget.SearchView
-        android:id="@+id/searchView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="true">
+        <android.support.v7.widget.SearchView
+            android:id="@+id/searchView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true">
 
-    </android.support.v7.widget.SearchView>
+        </android.support.v7.widget.SearchView>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id='@+id/relativeLayoutButton'
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/relativeLayoutSearchView">
+
+        <Button
+            android:id="@+id/shuffleButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="3.5dp"
+            android:background="@drawable/round_button"
+            android:onClick="shuffleSongs"
+            android:text="Shuffle" />
+
 
     </RelativeLayout>
 
@@ -63,10 +83,10 @@
             android:focusableInTouchMode="true"
             android:fontFamily="sans-serif-condensed"
             android:marqueeRepeatLimit="marquee_forever"
-            android:scrollHorizontally="true"
-            android:singleLine="true"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
             android:text="Currently no track selected" />
 
         <ImageView
@@ -84,7 +104,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/toolbar4"
-        android:layout_below="@+id/relativeLayoutSearchView"
+        android:layout_below="@+id/relativeLayoutButton"
+        android:layout_margin="1.5dp"
         android:background="@drawable/list_selector" />
 
 

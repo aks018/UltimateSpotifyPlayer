@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
@@ -87,27 +88,18 @@ public class MainActivity extends Activity implements
     public static TextView mSelectedTrackTitle;
     public static ImageView mSelectedTrackImage;
     public static ImageView mPlayerControl;
-
     Toolbar toolbar;
-
     static int currentSelected = 0;
-
     boolean pause;
-
     SearchView searchView;
-
-    public static final String CMDTOGGLEPAUSE = "togglepause";
-    public static final String CMDPAUSE = "pause";
-    public static final String CMDPREVIOUS = "previous";
-    public static final String CMDNEXT = "next";
-    public static final String SERVICECMD = "com.android.music.musicservicecommand";
-    public static final String CMDNAME = "command";
-    public static final String CMDSTOP = "stop";
-
     public static int selectedPosition = -100;
     public static Song currentSongPlaying;
 
     RelativeLayout relativeLayoutSearchView;
+
+    private boolean shuffle = false;
+
+    Button shuffleButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,6 +117,7 @@ public class MainActivity extends Activity implements
 
         toolbar = (Toolbar) findViewById(R.id.toolbar4);
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        shuffleButton = (Button) findViewById(R.id.shuffleButton);
 
 
         toolbar.setOnClickListener(new View.OnClickListener() {
@@ -181,6 +174,31 @@ public class MainActivity extends Activity implements
             }
         });
 
+    }
+
+    public void shuffleSongs(View view) {
+        if (shuffle) {
+            shuffle = false;
+            shuffleButton.setText("Shuffle");
+        } else {
+            shuffle = true;
+            shuffleButton.setText("No Shuffle");
+            selectRandomSong();
+        }
+    }
+
+    private void selectRandomSong() {
+        int newPosition = randomWithRange(0, songList.size() - 1);
+        Song song = (Song) listView.getAdapter().getItem(newPosition);
+        currentSongPlaying = song;
+        mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
+        Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+        currentSelected = newPosition;
+        mPlayer.refreshCache();
+        mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+        songBaseAdapter.notifyDataSetChanged();
+        selectedPosition = newPosition;
+        listView.smoothScrollToPosition(newPosition);
     }
 
     private void setUpListView() {
@@ -353,22 +371,26 @@ public class MainActivity extends Activity implements
 
             case kSpPlaybackNotifyAudioDeliveryDone:
                 try {
-                    int newPosition = currentSelected + 1;
-                    if (newPosition <= songList.size() - 1) {
-                        Song song = (Song) listView.getAdapter().getItem(newPosition);
-                        currentSongPlaying = song;
-                        mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-                        Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
-                        currentSelected = newPosition;
-                        mPlayer.refreshCache();
-                        mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                    if (!shuffle) {
+                        int newPosition = currentSelected + 1;
+                        if (newPosition <= songList.size() - 1) {
+                            Song song = (Song) listView.getAdapter().getItem(newPosition);
+                            currentSongPlaying = song;
+                            mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
+                            Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+                            currentSelected = newPosition;
+                            mPlayer.refreshCache();
+                            mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                        } else {
+                            currentSelected = 0;
+                            Song song = (Song) listView.getAdapter().getItem(currentSelected);
+                            currentSongPlaying = song;
+                            mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
+                            Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+                            mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                        }
                     } else {
-                        currentSelected = 0;
-                        Song song = (Song) listView.getAdapter().getItem(currentSelected);
-                        currentSongPlaying = song;
-                        mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-                        Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
-                        mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                        selectRandomSong();
                     }
                     selectedPosition = currentSelected;
                     songBaseAdapter.notifyDataSetChanged();
@@ -379,6 +401,11 @@ public class MainActivity extends Activity implements
             default:
                 break;
         }
+    }
+
+    private int randomWithRange(int min, int max) {
+        int range = (max - min) + 1;
+        return (int) (Math.random() * range) + min;
     }
 
     @Override
@@ -413,7 +440,6 @@ public class MainActivity extends Activity implements
         //Some url endpoint that you may have
         try {
             String myUrl = "https://api.spotify.com/v1/me/tracks";
-            getData(myUrl);
             //String to place our result in
             String result;
             //Instantiate new instance of our class
@@ -426,10 +452,6 @@ public class MainActivity extends Activity implements
             Log.e(TAG, e.toString());
         }
 
-
-    }
-
-    private void getData(String myUrl) {
 
     }
 
