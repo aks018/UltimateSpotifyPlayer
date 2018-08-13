@@ -1,8 +1,10 @@
 package aviee.develop.music.ultimatespotifyplayer;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.media.AudioManager;
@@ -10,6 +12,11 @@ import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.ToolbarWidgetWrapper;
@@ -61,10 +68,11 @@ import aviee.develop.music.ultimatespotifyplayer.pojo.Song;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Track;
 import aviee.develop.music.ultimatespotifyplayer.pojo.UserLibrary;
 
-import static android.content.ContentValues.TAG;
 
 public class MainActivity extends Activity implements
         SpotifyPlayer.NotificationCallback, ConnectionStateCallback {
+
+    private String TAG = "MainActivity";
     // TODO: Replace with your client ID
     private static final String CLIENT_ID = "194a6543e06246dba32f77c9b9214da5";
 
@@ -100,6 +108,13 @@ public class MainActivity extends Activity implements
     private boolean shuffle = false;
 
     Button shuffleButton;
+
+    private SpeechRecognizer mSpeechRecognizer;
+    private Intent mSpeechRecognizerIntent;
+    private boolean mIsListening;
+
+    private View speechView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -173,7 +188,46 @@ public class MainActivity extends Activity implements
                 }
             }
         });
+        requestRecordAudioPermission();
 
+        setUpSpeech();
+    }
+
+
+    private void setUpSpeech() {
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mPlayer.pause(new Player.OperationCallback() {
+                    @Override
+                    public void onSuccess() {
+                        Log.i(TAG, "Paused Player");
+                    }
+
+                    @Override
+                    public void onError(Error error) {
+                        Log.e(TAG, error.toString());
+                    }
+                });
+                if (!mIsListening) {
+                    mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
+                }
+                speechView = view;
+
+            }
+        });
+
+        mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        mSpeechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
+                this.getPackageName());
+
+
+        SpeechRecognitionListener listener = new SpeechRecognitionListener();
+        mSpeechRecognizer.setRecognitionListener(listener);
     }
 
     public void shuffleSongs(View view) {
@@ -277,6 +331,18 @@ public class MainActivity extends Activity implements
         }
     }
 
+    private void requestRecordAudioPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            String requiredPermission = Manifest.permission.RECORD_AUDIO;
+
+            // If the user previously denied this permission then show a message explaining why
+            // this permission is needed
+            if (checkCallingOrSelfPermission(requiredPermission) == PackageManager.PERMISSION_DENIED) {
+                requestPermissions(new String[]{requiredPermission}, 101);
+            }
+        }
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -342,6 +408,12 @@ public class MainActivity extends Activity implements
     @Override
     protected void onDestroy() {
         Spotify.destroyPlayer(this);
+
+        if (mSpeechRecognizer != null) {
+            mSpeechRecognizer.destroy();
+        }
+
+
         super.onDestroy();
     }
 
@@ -589,6 +661,98 @@ public class MainActivity extends Activity implements
                     Log.e("MainActivity", e.toString());
                 }
             }
+        }
+    }
+
+    protected class SpeechRecognitionListener implements RecognitionListener {
+
+        @Override
+        public void onBeginningOfSpeech() {
+            Log.d(TAG, "onBeginingOfSpeech");
+        }
+
+        @Override
+        public void onBufferReceived(byte[] buffer) {
+
+        }
+
+        @Override
+        public void onEndOfSpeech() {
+            Log.d(TAG, "onEndOfSpeech");
+        }
+
+        @Override
+        public void onError(int error) {
+            Log.d(TAG, "error = " + error);
+        }
+
+        @Override
+        public void onEvent(int eventType, Bundle params) {
+
+        }
+
+        @Override
+        public void onPartialResults(Bundle partialResults) {
+
+            Log.i(TAG, "Partial results: " + partialResults.toString());
+
+        }
+
+        @Override
+        public void onReadyForSpeech(Bundle params) {
+            Log.d(TAG, "onReadyForSpeech"); //$NON-NLS-1$
+        }
+
+        @Override
+        public void onResults(Bundle results) {
+            Log.d(TAG, "onResults");
+            ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+            // matches are the return values of speech recognition engine
+            // Use these values for whatever you wish to do
+            if (!matches.isEmpty()) {
+                String query = matches.get(0).toString();
+                Snackbar.make(speechView, query, Snackbar.LENGTH_LONG).show();
+                String[] queryArray = query.split(" ", 2);
+                if (queryArray.length > 1) {
+                    String command = queryArray[0];
+                    switch (command.toLowerCase()) {
+                        case "play":
+                            String songName = queryArray[1];
+                            for (int i = 0; i < songList.size(); i++) {
+                                if (songList.get(i).getTrackName().equalsIgnoreCase(songName)) {
+                                    Song song = songList.get(i);
+                                    currentSongPlaying = song;
+                                    mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
+                                    Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+                                    currentSelected = i;
+                                    mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                                    selectedPosition = i;
+                                    songBaseAdapter.notifyDataSetChanged();
+                                    listView.smoothScrollToPosition(i);
+                                }
+                            }
+                            break;
+                    }
+                } else if (queryArray.length == 1) {
+                    String command = queryArray[0];
+                    switch (command.toLowerCase()) {
+                        case "shuffle":
+                            shuffle = true;
+                            shuffleButton.setText("No Shuffle");
+                            selectRandomSong();
+                            break;
+                        case "random":
+                            shuffle = true;
+                            shuffleButton.setText("No Shuffle");
+                            selectRandomSong();
+                            break;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onRmsChanged(float rmsdB) {
         }
     }
 }

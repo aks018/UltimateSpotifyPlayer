@@ -16,6 +16,8 @@
             android:id="@+id/searchView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
             android:clickable="true">
 
         </android.support.v7.widget.SearchView>
@@ -107,6 +109,15 @@
         android:layout_below="@+id/relativeLayoutButton"
         android:layout_margin="1.5dp"
         android:background="@drawable/list_selector" />
+
+    <aviee.develop.music.ultimatespotifyplayer.config.MoveableFloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/toolbar4"
+        android:layout_alignParentEnd="true"
+        android:layout_gravity="end|bottom"
+        android:src="@drawable/baseline_mic_black_24" />
 
 
 </RelativeLayout>
