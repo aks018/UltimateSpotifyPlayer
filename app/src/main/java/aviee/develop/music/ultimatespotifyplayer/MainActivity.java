@@ -215,6 +215,10 @@ public class MainActivity extends Activity implements
                 }
                 speechView = view;
 
+                Snackbar.make(speechView, "Say Shuffle or Random to play a random song.\n" +
+                        "Say Play {Song Title} to play a specific song." , Snackbar.LENGTH_LONG).show();
+
+
             }
         });
 
