@@ -29,6 +29,7 @@ import org.mortbay.jetty.Main;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ import aviee.develop.music.ultimatespotifyplayer.pojo.RandomSong;
 import aviee.develop.music.ultimatespotifyplayer.pojo.RandomTracks;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Song;
 
-public class SongBaseAdapter extends BaseAdapter implements Filterable {
+public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializable {
 
     private static LayoutInflater inflater = null;
     Context context;

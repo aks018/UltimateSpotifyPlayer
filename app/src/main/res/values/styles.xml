@@ -19,5 +19,10 @@
         <item name="android:textAlignment">center</item>
     </style>
 
+    <style name="SeekBarColor"
+        parent="Widget.AppCompat.SeekBar">
+        <item name="colorAccent">@color/LawnGreen</item>
+    </style>
+
 
 </resources>

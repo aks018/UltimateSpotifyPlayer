@@ -3,4 +3,21 @@
     <string name="player_error">Error initializing YouTube player: %s</string>
     <string name="seek_to">Jump To</string>
     <string name="seek_to_hint">Seconds</string>
+    <string name="authenticate">authenticate</string>
+    <string name="pause">pause</string>
+    <string name="shuffle">shuffle</string>
+    <string name="CurrentSelected">Current Selected</string>
+
+    <string name="SelectedPosition">Selected Position</string>
+    <string name="SelectedSong">Selected Song</string>
+    <string name="SongListAdapter">Song List Adapter</string>
+    <string name="CurrentSongPlaying">CurrentSongPlaying</string>
+    <string name="ShuffleSomeMusic">some music</string>
+    <string name="NoShuffle">No Shuffle</string>
+    <string name="Shuffle">Shuffle</string>
+    <string name="Find">Find</string>
+
+
+
+
 </resources>

@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.media.AudioManager;
+import android.media.session.PlaybackState;
 import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -109,11 +110,65 @@ public class MainActivity extends Activity implements
 
     Button shuffleButton;
 
-    private SpeechRecognizer mSpeechRecognizer;
+    public static SpeechRecognizer mSpeechRecognizer;
     private Intent mSpeechRecognizerIntent;
     private boolean mIsListening;
+    private static boolean authenticate;
+    public static boolean stayWithinApplication;
 
     private View speechView;
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("songList", songList);
+        outState.putBoolean(getString(R.string.authenticate), authenticate);
+        outState.putBoolean(getString(R.string.pause), pause);
+        outState.putBoolean(getString(R.string.shuffle), shuffle);
+        outState.putInt(getString(R.string.CurrentSelected), currentSelected);
+        outState.putInt(getString(R.string.SelectedPosition), selectedPosition);
+        outState.putSerializable(getString(R.string.SelectedSong), currentSongPlaying);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        songList = (ArrayList<Song>) savedInstanceState.getSerializable("songList");
+        currentSongPlaying = (Song) savedInstanceState.getSerializable(getString(R.string.SelectedSong));
+
+        authenticate = (Boolean) savedInstanceState.getBoolean(getString(R.string.authenticate));
+        pause = (Boolean) savedInstanceState.getBoolean(getString(R.string.pause));
+        shuffle = (Boolean) savedInstanceState.getBoolean(getString(R.string.shuffle));
+        if (shuffle) {
+            shuffleButton.setText(getString(R.string.NoShuffle));
+        } else {
+            shuffleButton.setText(getString(R.string.Shuffle));
+        }
+
+        currentSelected = (Integer) savedInstanceState.getInt(getString(R.string.CurrentSelected));
+        selectedPosition = (Integer) savedInstanceState.getInt(getString(R.string.SelectedPosition));
+        if (currentSongPlaying != null) {
+            pause = true;
+            mSelectedTrackTitle.setText(currentSongPlaying.getTrackName() + " ~ " + currentSongPlaying.getArtist());
+            Picasso.with(MainActivity.this).load(currentSongPlaying.getAlbumImage()).into(mSelectedTrackImage);
+
+            com.spotify.sdk.android.player.PlaybackState playbackState = mPlayer.getPlaybackState();
+            Log.i(TAG, Boolean.toString(playbackState.isActiveDevice));
+            Log.i(TAG, Boolean.toString(playbackState.isPlaying));
+
+        }
+        if (currentSongPlaying == null)
+            mPlayerControl.setImageResource(0);
+        else
+            mPlayerControl.setImageResource(R.drawable.baseline_play_arrow_24);
+
+        progressBar.setVisibility(View.INVISIBLE);
+        songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
+        listView.setAdapter(songBaseAdapter);
+
+        songBaseAdapter.notifyDataSetChanged();
+    }
 
 
     @Override
@@ -125,24 +180,18 @@ public class MainActivity extends Activity implements
 
         relativeLayoutSearchView = (RelativeLayout) findViewById(R.id.relativeLayoutSearchView);
 
-        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
-        AuthenticationRequest request = builder.build();
-        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+        if (!authenticate) {
+            AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
+            builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
+            AuthenticationRequest request = builder.build();
+            AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+        }
 
         toolbar = (Toolbar) findViewById(R.id.toolbar4);
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         shuffleButton = (Button) findViewById(R.id.shuffleButton);
 
-
-        toolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (selectedPosition > 0) {
-
-                }
-            }
-        });
+        toolbarOnClick();
 
         listView = (ListView) findViewById(R.id.songListView);
         listView.setScrollingCacheEnabled(false);
@@ -161,20 +210,21 @@ public class MainActivity extends Activity implements
         mPlayerControl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "CLICKED!!!!");
                 if (pause) {
-                    mPlayer.pause(new Player.OperationCallback() {
+                    mPlayer.resume(new Player.OperationCallback() {
                         @Override
                         public void onSuccess() {
-                            Log.i("MainActivity", "Paused Player");
+
                         }
 
                         @Override
                         public void onError(Error error) {
-                            Log.e("MainActivity", error.toString());
+
                         }
                     });
                 } else {
-                    mPlayer.resume(new Player.OperationCallback() {
+                    mPlayer.pause(new Player.OperationCallback() {
                         @Override
                         public void onSuccess() {
                             Log.i("MainActivity", "Paused Player");
@@ -189,10 +239,24 @@ public class MainActivity extends Activity implements
             }
         });
         requestRecordAudioPermission();
-
         setUpSpeech();
+
+        stayWithinApplication = false;
     }
 
+    private void toolbarOnClick() {
+
+        toolbar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selectedPosition >= 0) {
+                    stayWithinApplication = true;
+                    Intent intent = new Intent(MainActivity.this, DisplaySong.class);
+                    startActivity(intent);
+                }
+            }
+        });
+    }
 
     private void setUpSpeech() {
         FloatingActionButton fab = findViewById(R.id.fab);
@@ -216,7 +280,7 @@ public class MainActivity extends Activity implements
                 speechView = view;
 
                 Snackbar.make(speechView, "Say Shuffle or Random to play a random song.\n" +
-                        "Say Play {Song Title} to play a specific song." , Snackbar.LENGTH_LONG).show();
+                        "Say Play {Song Title} to play a specific song.", Snackbar.LENGTH_LONG).show();
 
 
             }
@@ -237,10 +301,10 @@ public class MainActivity extends Activity implements
     public void shuffleSongs(View view) {
         if (shuffle) {
             shuffle = false;
-            shuffleButton.setText("Shuffle");
+            shuffleButton.setText(getString(R.string.Shuffle));
         } else {
             shuffle = true;
-            shuffleButton.setText("No Shuffle");
+            shuffleButton.setText(getString(R.string.NoShuffle));
             selectRandomSong();
         }
     }
@@ -302,7 +366,7 @@ public class MainActivity extends Activity implements
 
     private void setUpSearchView() {
         searchView = (SearchView) findViewById(R.id.searchView);
-        searchView.setQueryHint("Find");
+        searchView.setQueryHint(getString(R.string.Find));
         searchView.clearFocus();
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -362,6 +426,8 @@ public class MainActivity extends Activity implements
                         mPlayer.addConnectionStateCallback(MainActivity.this);
                         mPlayer.addNotificationCallback(MainActivity.this);
                         token = response.getAccessToken();
+
+                        authenticate = true;
                     }
 
                     @Override
@@ -376,6 +442,8 @@ public class MainActivity extends Activity implements
     @Override
     protected void onResume() {
         super.onResume();
+        Log.i(TAG, "onResume");
+        stayWithinApplication = false;
         if (mPlayer != null) {
             mPlayer.resume(new Player.OperationCallback() {
                 @Override
@@ -394,23 +462,27 @@ public class MainActivity extends Activity implements
     @Override
     protected void onPause() {
         super.onPause();
-        if (mPlayer != null) {
-            mPlayer.pause(new Player.OperationCallback() {
-                @Override
-                public void onSuccess() {
+        Log.i(TAG, "onPause");
+        if (!stayWithinApplication) {
+            if (mPlayer != null) {
+                mPlayer.pause(new Player.OperationCallback() {
+                    @Override
+                    public void onSuccess() {
 
-                }
+                    }
 
-                @Override
-                public void onError(Error error) {
+                    @Override
+                    public void onError(Error error) {
 
-                }
-            });
+                    }
+                });
+            }
         }
     }
 
     @Override
     protected void onDestroy() {
+        Log.i(TAG, "onDestroy");
         Spotify.destroyPlayer(this);
 
         if (mSpeechRecognizer != null) {
@@ -424,6 +496,7 @@ public class MainActivity extends Activity implements
     @Override
     protected void onStop() {
         super.onStop();
+        Log.i(TAG, "onStop");
         HttpResponseCache cache = HttpResponseCache.getInstalled();
         if (cache != null) {
             cache.flush();
@@ -435,16 +508,14 @@ public class MainActivity extends Activity implements
         Log.d("MainActivity", "Playback event received: " + playerEvent.name());
         switch (playerEvent) {
             // Handle event type as necessary
-
             case kSpPlaybackNotifyPlay:
-                pause = true;
+                pause = false;
                 mPlayerControl.setImageResource(R.drawable.baseline_pause_24);
                 break;
             case kSpPlaybackNotifyPause:
-                pause = false;
+                pause = true;
                 mPlayerControl.setImageResource(R.drawable.baseline_play_arrow_24);
                 break;
-
             case kSpPlaybackNotifyAudioDeliveryDone:
                 try {
                     if (!shuffle) {
@@ -482,19 +553,6 @@ public class MainActivity extends Activity implements
     private int randomWithRange(int min, int max) {
         int range = (max - min) + 1;
         return (int) (Math.random() * range) + min;
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putSerializable("songList", songList);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-
-        songList = (ArrayList<Song>) savedInstanceState.getSerializable("songList");
     }
 
     @Override
@@ -612,6 +670,7 @@ public class MainActivity extends Activity implements
                         Song song = new Song();
                         Track track = item.getTrack();
                         song.setAlbum(track.getAlbum().getName());
+                        song.setSongLength(track.getDuration_ms());
                         Album album = track.getAlbum();
                         song.setAlbumImage(album.getImages()[0].getUrl());
                         song.setReleaseDate(track.getAlbum().getRelease_date());
@@ -723,7 +782,7 @@ public class MainActivity extends Activity implements
                         case "play":
                             String songName = queryArray[1];
                             for (int i = 0; i < songList.size(); i++) {
-                                if (songList.get(i).getTrackName().equalsIgnoreCase(songName)) {
+                                if (songList.get(i).getTrackName().toLowerCase().contains(songName.toLowerCase())) {
                                     Song song = songList.get(i);
                                     currentSongPlaying = song;
                                     mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
@@ -736,22 +795,75 @@ public class MainActivity extends Activity implements
                                 }
                             }
                             break;
+                        case "shuffle":
+                            if (queryArray[1].toLowerCase().equals(getString(R.string.ShuffleSomeMusic).toLowerCase())) {
+                                shuffle = true;
+                                shuffleButton.setText(getString(R.string.NoShuffle));
+                                selectRandomSong();
+                            }
+                            break;
                     }
                 } else if (queryArray.length == 1) {
                     String command = queryArray[0];
                     switch (command.toLowerCase()) {
                         case "shuffle":
                             shuffle = true;
-                            shuffleButton.setText("No Shuffle");
+                            shuffleButton.setText(getString(R.string.NoShuffle));
                             selectRandomSong();
                             break;
                         case "random":
                             shuffle = true;
-                            shuffleButton.setText("No Shuffle");
+                            shuffleButton.setText(getString(R.string.NoShuffle));
                             selectRandomSong();
                             break;
+                        case "pause":
+                            mPlayer.pause(new Player.OperationCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    Log.i("MainActivity", "Paused Player");
+                                }
+
+                                @Override
+                                public void onError(Error error) {
+                                    Log.e("MainActivity", "Unable to play song.");
+                                }
+                            });
+                            break;
+                        case "play":
+                            shuffle = true;
+                            selectRandomSong();
+                            break;
+                        case "resume":
+                            mPlayer.resume(new Player.OperationCallback() {
+                                @Override
+                                public void onSuccess() {
+
+                                }
+
+                                @Override
+                                public void onError(Error error) {
+
+                                }
+                            });
+                            break;
+                        case "start":
+                            mPlayer.resume(new Player.OperationCallback() {
+                                @Override
+                                public void onSuccess() {
+
+                                }
+
+                                @Override
+                                public void onError(Error error) {
+
+                                }
+                            });
+                            break;
+
                     }
                 }
+            } else {
+                Snackbar.make(speechView, "Unable to find results.", Snackbar.LENGTH_LONG).show();
             }
         }
 
