@@ -177,15 +177,8 @@ public class MainActivity extends Activity implements
         setContentView(R.layout.activity_main);
 
         enableHttpCaching();
-
         relativeLayoutSearchView = (RelativeLayout) findViewById(R.id.relativeLayoutSearchView);
 
-        if (!authenticate) {
-            AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-            builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
-            AuthenticationRequest request = builder.build();
-            AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
-        }
 
         toolbar = (Toolbar) findViewById(R.id.toolbar4);
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
@@ -198,7 +191,6 @@ public class MainActivity extends Activity implements
         listView.setSelector(R.drawable.list_selector);
 
         setUpSearchView();
-        setUpListView();
 
 
         progressBar = (ProgressBar) findViewById(R.id.secondBar);
@@ -242,6 +234,19 @@ public class MainActivity extends Activity implements
         setUpSpeech();
 
         stayWithinApplication = false;
+
+        if (!authenticate) {
+            AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
+            builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
+            AuthenticationRequest request = builder.build();
+            AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+        }
+
+        shuffleButton.setVisibility(View.INVISIBLE);
+        fab.setVisibility(View.INVISIBLE);
+
+
+        setUpListView();
     }
 
     private void toolbarOnClick() {
@@ -258,8 +263,10 @@ public class MainActivity extends Activity implements
         });
     }
 
+    FloatingActionButton fab;
+
     private void setUpSpeech() {
-        FloatingActionButton fab = findViewById(R.id.fab);
+        fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -292,8 +299,6 @@ public class MainActivity extends Activity implements
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
                 this.getPackageName());
-
-
         SpeechRecognitionListener listener = new SpeechRecognitionListener();
         mSpeechRecognizer.setRecognitionListener(listener);
     }
@@ -620,6 +625,7 @@ public class MainActivity extends Activity implements
         protected void onPreExecute() {
             super.onPreExecute();
             progressBar.setVisibility(View.VISIBLE);
+
         }
 
         @Override
@@ -707,6 +713,8 @@ public class MainActivity extends Activity implements
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
             if (result == null || result.equals("null")) {
+                fab.setVisibility(View.VISIBLE);
+                shuffleButton.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.INVISIBLE);
                 songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
                 listView.setAdapter(songBaseAdapter);

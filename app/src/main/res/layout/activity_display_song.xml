@@ -72,8 +72,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
-            android:theme="@style/SeekBarColor"
             android:layout_marginTop="5dp"
+            android:theme="@style/SeekBarColor"
             android:thumbTint="@color/Green" />
 
         <ImageView
@@ -82,6 +82,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/seekBar"
             android:layout_centerInParent="true"
+            android:layout_marginTop="5dp"
             app:srcCompat="@drawable/baseline_play_circle_filled_white_black_48" />
 
         <TextView
@@ -89,22 +90,40 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
-            android:textAlignment="textEnd"
             android:layout_alignTop="@+id/seekBar"
             android:layout_toStartOf="@+id/seekBar"
             android:text="TextView"
-            android:textColor="@color/Black"/>
+            android:textAlignment="textEnd"
+            android:textColor="@color/Black" />
 
         <TextView
             android:id="@+id/textViewEndTime"
-            android:textAlignment="textStart"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_alignTop="@+id/seekBar"
             android:layout_toEndOf="@+id/seekBar"
             android:text="TextView"
+            android:textAlignment="textStart"
             android:textColor="@color/Black" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:onClick="previousOnClick"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="5dp"
+            app:srcCompat="@drawable/baseline_skip_previous_black_48" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="5dp"
+            android:onClick="nextOnClick"
+            app:srcCompat="@drawable/baseline_skip_next_black_48" />
 
     </RelativeLayout>
 

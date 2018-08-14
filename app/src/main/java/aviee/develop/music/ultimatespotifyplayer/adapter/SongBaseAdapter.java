@@ -139,6 +139,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
                             case aviee.develop.music.ultimatespotifyplayer.R.id.musicVideo:
                                 Intent intent = new Intent(context, YoutubeActivity.class);
                                 intent.putExtra("query", songObject.getArtist() + " - " + songObject.getTrackName() + " Music Video");
+                                Log.i(TAG, songObject.getArtist() + " - " + songObject.getTrackName() + " Official Music Video");
                                 context.startActivity(intent);
                                 break;
                             case aviee.develop.music.ultimatespotifyplayer.R.id.randomSong:

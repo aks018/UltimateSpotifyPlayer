@@ -110,6 +110,7 @@ public class DisplaySong extends AppCompatActivity {
             }
         });
     }
+
     private void setupSeekBar() {
         try {
             final int totalSeconds = Integer.parseInt(displaySong.getSongLength()) / 1000;
@@ -222,10 +223,6 @@ public class DisplaySong extends AppCompatActivity {
         Log.i(TAG, "onDestroy");
         Spotify.destroyPlayer(this);
 
-        if (mSpeechRecognizer != null) {
-            mSpeechRecognizer.destroy();
-        }
-
 
         super.onDestroy();
     }
@@ -240,4 +237,35 @@ public class DisplaySong extends AppCompatActivity {
         }
     }
 
+    public void previousOnClick(View view) {
+        if (MainActivity.mPlayer != null) {
+            MainActivity.mPlayer.skipToPrevious(new Player.OperationCallback() {
+                @Override
+                public void onSuccess() {
+
+                }
+
+                @Override
+                public void onError(Error error) {
+
+                }
+            });
+        }
+    }
+
+    public void nextOnClick(View view) {
+        if (MainActivity.mPlayer != null) {
+            MainActivity.mPlayer.skipToNext(new Player.OperationCallback() {
+                @Override
+                public void onSuccess() {
+
+                }
+
+                @Override
+                public void onError(Error error) {
+
+                }
+            });
+        }
+    }
 }
