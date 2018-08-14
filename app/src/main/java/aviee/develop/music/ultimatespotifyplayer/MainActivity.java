@@ -118,6 +118,8 @@ public class MainActivity extends Activity implements
 
     private View speechView;
 
+    private boolean prevSelected;
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -152,11 +154,6 @@ public class MainActivity extends Activity implements
             pause = true;
             mSelectedTrackTitle.setText(currentSongPlaying.getTrackName() + " ~ " + currentSongPlaying.getArtist());
             Picasso.with(MainActivity.this).load(currentSongPlaying.getAlbumImage()).into(mSelectedTrackImage);
-
-            com.spotify.sdk.android.player.PlaybackState playbackState = mPlayer.getPlaybackState();
-            Log.i(TAG, Boolean.toString(playbackState.isActiveDevice));
-            Log.i(TAG, Boolean.toString(playbackState.isPlaying));
-
         }
         if (currentSongPlaying == null)
             mPlayerControl.setImageResource(0);
@@ -521,11 +518,12 @@ public class MainActivity extends Activity implements
                 pause = true;
                 mPlayerControl.setImageResource(R.drawable.baseline_play_arrow_24);
                 break;
-            case kSpPlaybackNotifyAudioDeliveryDone:
+            case kSpPlaybackNotifyPrev:
                 try {
+                    prevSelected = true;
                     if (!shuffle) {
-                        int newPosition = currentSelected + 1;
-                        if (newPosition <= songList.size() - 1) {
+                        int newPosition = currentSelected - 1;
+                        if (newPosition >= 0) {
                             Song song = (Song) listView.getAdapter().getItem(newPosition);
                             currentSongPlaying = song;
                             mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
@@ -549,6 +547,38 @@ public class MainActivity extends Activity implements
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());
                 }
+                break;
+            case kSpPlaybackNotifyAudioDeliveryDone:
+                try {
+                    if (!prevSelected) {
+                        if (!shuffle) {
+                            int newPosition = currentSelected + 1;
+                            if (newPosition <= songList.size() - 1) {
+                                Song song = (Song) listView.getAdapter().getItem(newPosition);
+                                currentSongPlaying = song;
+                                mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
+                                Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+                                currentSelected = newPosition;
+                                mPlayer.refreshCache();
+                                mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                            } else {
+                                currentSelected = 0;
+                                Song song = (Song) listView.getAdapter().getItem(currentSelected);
+                                currentSongPlaying = song;
+                                mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
+                                Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+                                mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                            }
+                        } else {
+                            selectRandomSong();
+                        }
+                        selectedPosition = currentSelected;
+                        songBaseAdapter.notifyDataSetChanged();
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                }
+                prevSelected = false;
                 break;
             default:
                 break;

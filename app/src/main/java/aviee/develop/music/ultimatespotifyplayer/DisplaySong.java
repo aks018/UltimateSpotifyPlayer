@@ -1,11 +1,13 @@
 package aviee.develop.music.ultimatespotifyplayer;
 
+import android.media.Image;
 import android.net.http.HttpResponseCache;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -19,6 +21,9 @@ import com.spotify.sdk.android.player.Spotify;
 import com.squareup.picasso.Picasso;
 
 import org.mortbay.jetty.Main;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 import aviee.develop.music.ultimatespotifyplayer.constant.Constants;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Song;
@@ -40,6 +45,10 @@ public class DisplaySong extends AppCompatActivity {
     TextView textViewStartTime;
     TextView textViewEndTime;
 
+    int totalSeconds;
+
+    ImageView previous;
+    ImageView next;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +63,8 @@ public class DisplaySong extends AppCompatActivity {
         displayAlbumName = findViewById(R.id.textViewAlbum);
         textViewStartTime = findViewById(R.id.textViewStartTime);
         textViewEndTime = findViewById(R.id.textViewEndTime);
+        previous = findViewById(R.id.previousButton);
+        next = findViewById(R.id.nextButton);
 
         seekBar = findViewById(R.id.seekBar);
         mediaPlayController = findViewById(R.id.imageViewPlayController);
@@ -113,17 +124,18 @@ public class DisplaySong extends AppCompatActivity {
 
     private void setupSeekBar() {
         try {
-            final int totalSeconds = Integer.parseInt(displaySong.getSongLength()) / 1000;
-            seekBar.setMax(Integer.parseInt(displaySong.getSongLength()) / 1000);
+
             final Handler mHandler = new Handler();
             DisplaySong.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (MainActivity.mPlayer != null) {
                         playbackState = MainActivity.mPlayer.getPlaybackState();
+                        totalSeconds = Integer.parseInt(displaySong.getSongLength()) / 1000;
+                        seekBar.setMax(totalSeconds);
                         int mCurrentPosition = (int) playbackState.positionMs / 1000;
                         seekBar.setProgress(0); // call these two methods before setting progress.
-                        seekBar.setMax(Integer.parseInt(displaySong.getSongLength()) / 1000);
+                        seekBar.setMax(totalSeconds);
                         seekBar.setProgress(mCurrentPosition);
                         displaySong = MainActivity.currentSongPlaying;
                         Picasso.with(DisplaySong.this).load(displaySong.getAlbumImage()).into(songImageView);
@@ -251,6 +263,23 @@ public class DisplaySong extends AppCompatActivity {
                 }
             });
         }
+
+        previous.setEnabled(false);
+
+        Timer buttonTimer = new Timer();
+        buttonTimer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        previous.setEnabled(true);
+                    }
+                });
+            }
+        }, 2500);
     }
 
     public void nextOnClick(View view) {
@@ -267,5 +296,22 @@ public class DisplaySong extends AppCompatActivity {
                 }
             });
         }
+
+        next.setEnabled(false);
+
+        Timer buttonTimer = new Timer();
+        buttonTimer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        next.setEnabled(true);
+                    }
+                });
+            }
+        }, 1800);
     }
 }
