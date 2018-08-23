@@ -11,6 +11,7 @@
     <ImageView
         android:id="@+id/songImageView"
         android:layout_width="500px"
+        android:layout_marginTop="15dp"
         android:layout_height="500px"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
@@ -108,25 +109,34 @@
             android:textColor="@color/Black" />
 
         <ImageView
+            android:id="@+id/previousButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:onClick="previousOnClick"
-            android:id="@+id/previousButton"
             android:layout_centerVertical="true"
-            android:layout_marginTop="5dp"
+            android:layout_margin="6.5dp"
+            android:layout_toStartOf="@+id/imageViewPlayController"
+            android:onClick="previousOnClick"
             app:srcCompat="@drawable/baseline_skip_previous_black_48" />
 
         <ImageView
+            android:id="@+id/nextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_margin="6.5dp"
+            android:layout_toEndOf="@+id/imageViewPlayController"
+            android:onClick="nextOnClick"
+            app:srcCompat="@drawable/baseline_skip_next_black_48" />
+
+        <ImageView
+            android:id="@+id/randomButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:layout_marginTop="5dp"
-            android:onClick="nextOnClick"
-            android:id="@+id/nextButton"
-
-            app:srcCompat="@drawable/baseline_skip_next_black_48" />
+            android:layout_margin="6.5dp"
+            android:onClick="shuffleOnClick"
+            app:srcCompat="@mipmap/baseline_shuffle_black_48" />
 
     </RelativeLayout>
 

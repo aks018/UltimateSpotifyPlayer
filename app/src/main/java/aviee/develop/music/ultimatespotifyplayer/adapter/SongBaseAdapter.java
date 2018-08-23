@@ -32,7 +32,7 @@ import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -50,14 +50,14 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
 
     private static LayoutInflater inflater = null;
     Context context;
-    ArrayList<Song> mData;
-    ArrayList<Song> mSongFilterList;
+    LinkedList<Song> mData;
+    LinkedList<Song> mSongFilterList;
     String TAG = "SongBaseAdapter";
     ValueFilter valueFilter;
     public String currentArtist;
 
     //Constructor for MusicBaseAdapter passing in the context of the activity using the adapter and the arraylist holding the music objects
-    public SongBaseAdapter(Context mainActivity, ArrayList<Song> songArrayList) {
+    public SongBaseAdapter(Context mainActivity, LinkedList<Song> songArrayList) {
         mData = songArrayList;
         mSongFilterList = mData;
         context = mainActivity;
@@ -239,7 +239,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
                         song.setAlbumImage(album.getImages()[0].getUrl());
                         song.setReleaseDate(randomItems.getAlbum().getRelease_date());
                         StringBuilder artists = new StringBuilder();
-                        ArrayList<String> arrayList = new ArrayList<>();
+                        LinkedList<String> arrayList = new LinkedList<>();
                         for (Artists artist : randomItems.getArtists()) {
                             artists.append(artist.getName() + ", ");
                             arrayList.add(artist.getUri());
@@ -301,7 +301,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
             FilterResults results = new FilterResults();
 
             if (constraint != null && constraint.length() > 0) {
-                List<Song> filterList = new ArrayList<>();
+                List<Song> filterList = new LinkedList<>();
                 for (int i = 0; i < mSongFilterList.size(); i++) {
                     Song song = mSongFilterList.get(i);
                     if (song.getTrackName().toLowerCase().contains(constraint.toString().toLowerCase())) {
@@ -328,7 +328,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
 
         @Override
         protected void publishResults(CharSequence constraint, FilterResults results) {
-            mData = (ArrayList<Song>) results.values;
+            mData = (LinkedList<Song>) results.values;
             notifyDataSetChanged();
         }
 

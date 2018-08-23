@@ -28,6 +28,7 @@ import java.util.TimerTask;
 import aviee.develop.music.ultimatespotifyplayer.constant.Constants;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Song;
 
+import static aviee.develop.music.ultimatespotifyplayer.MainActivity.mPlayer;
 import static aviee.develop.music.ultimatespotifyplayer.MainActivity.mSpeechRecognizer;
 
 public class DisplaySong extends AppCompatActivity {
@@ -49,6 +50,7 @@ public class DisplaySong extends AppCompatActivity {
 
     ImageView previous;
     ImageView next;
+    ImageView random;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +67,13 @@ public class DisplaySong extends AppCompatActivity {
         textViewEndTime = findViewById(R.id.textViewEndTime);
         previous = findViewById(R.id.previousButton);
         next = findViewById(R.id.nextButton);
+        random = findViewById(R.id.randomButton);
+
+        if (MainActivity.shuffle) {
+            random.setImageResource(R.mipmap.baseline_shuffle_black_48);
+        } else {
+            random.setImageResource(R.drawable.baseline_shuffle_white_48);
+        }
 
         seekBar = findViewById(R.id.seekBar);
         mediaPlayController = findViewById(R.id.imageViewPlayController);
@@ -79,6 +88,16 @@ public class DisplaySong extends AppCompatActivity {
         setupSeekBar();
 
 
+    }
+
+    private void shuffle() {
+        if (MainActivity.shuffle) {
+            random.setImageResource(R.drawable.baseline_shuffle_white_48);
+            MainActivity.shuffle = false;
+        } else {
+            random.setImageResource(R.mipmap.baseline_shuffle_black_48);
+            MainActivity.shuffle = true;
+        }
     }
 
     private void setUpMediaPlayController() {
@@ -313,5 +332,9 @@ public class DisplaySong extends AppCompatActivity {
                 });
             }
         }, 1800);
+    }
+
+    public void shuffleOnClick(View view) {
+        shuffle();
     }
 }

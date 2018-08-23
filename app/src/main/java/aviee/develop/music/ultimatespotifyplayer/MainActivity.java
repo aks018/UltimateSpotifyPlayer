@@ -59,9 +59,11 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 
 import aviee.develop.music.ultimatespotifyplayer.adapter.SongBaseAdapter;
+import aviee.develop.music.ultimatespotifyplayer.constant.Constants;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Album;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Artists;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Items;
@@ -86,7 +88,7 @@ public class MainActivity extends Activity implements
 
     public static String token = "";
 
-    ArrayList<Song> songList;
+    LinkedList<Song> songList;
 
     SongBaseAdapter songBaseAdapter;
 
@@ -106,7 +108,7 @@ public class MainActivity extends Activity implements
 
     RelativeLayout relativeLayoutSearchView;
 
-    private boolean shuffle = false;
+    public static boolean shuffle;
 
     Button shuffleButton;
 
@@ -136,7 +138,7 @@ public class MainActivity extends Activity implements
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        songList = (ArrayList<Song>) savedInstanceState.getSerializable("songList");
+        songList = (LinkedList<Song>) savedInstanceState.getSerializable("songList");
         currentSongPlaying = (Song) savedInstanceState.getSerializable(getString(R.string.SelectedSong));
 
         authenticate = (Boolean) savedInstanceState.getBoolean(getString(R.string.authenticate));
@@ -173,6 +175,8 @@ public class MainActivity extends Activity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        shuffle = false;
+
         enableHttpCaching();
         relativeLayoutSearchView = (RelativeLayout) findViewById(R.id.relativeLayoutSearchView);
 
@@ -191,7 +195,7 @@ public class MainActivity extends Activity implements
 
 
         progressBar = (ProgressBar) findViewById(R.id.secondBar);
-        songList = new ArrayList<>();
+        songList = new LinkedList<>();
         mSelectedTrackTitle = (TextView) findViewById(R.id.selected_track_title);
         mSelectedTrackImage = (ImageView) findViewById(R.id.selected_track_image);
         mPlayerControl = (ImageView) findViewById(R.id.player_control);
@@ -312,7 +316,7 @@ public class MainActivity extends Activity implements
     }
 
     private void selectRandomSong() {
-        int newPosition = randomWithRange(0, songList.size() - 1);
+        int newPosition = Constants.randomWithRange(0, songList.size() - 1);
         Song song = (Song) listView.getAdapter().getItem(newPosition);
         currentSongPlaying = song;
         mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
@@ -585,10 +589,6 @@ public class MainActivity extends Activity implements
         }
     }
 
-    private int randomWithRange(int min, int max) {
-        int range = (max - min) + 1;
-        return (int) (Math.random() * range) + min;
-    }
 
     @Override
     public void onPlaybackError(Error error) {

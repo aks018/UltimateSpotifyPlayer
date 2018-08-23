@@ -2,6 +2,7 @@ package aviee.develop.music.ultimatespotifyplayer.pojo;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Song implements Serializable {
     String artist;
@@ -11,7 +12,7 @@ public class Song implements Serializable {
     String releaseDate;
     String albumImage;
     String getTotalArtistTracks;
-    ArrayList<String> artistUri;
+    List<String> artistUri;
     String songLength;
 
     public String getArtist() {
@@ -70,11 +71,11 @@ public class Song implements Serializable {
         this.getTotalArtistTracks = getTotalArtistTracks;
     }
 
-    public ArrayList<String> getArtistUri() {
+    public List<String> getArtistUri() {
         return artistUri;
     }
 
-    public void setArtistUri(ArrayList<String> artistUri) {
+    public void setArtistUri(List<String> artistUri) {
         this.artistUri = artistUri;
     }
 
