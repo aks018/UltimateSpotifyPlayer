@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -179,31 +180,41 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
                                 wv = new WebView(context);
                                 String q = songObject.getArtist() + " " + songObject.getTrackName() + " lyrics";
                                 String query = "https://www.google.com/search?q=" + q;
-                                Log.i(TAG, query);
-                                wv.loadUrl(query);
-                                WebSettings wb = wv.getSettings();
-                                wb.setJavaScriptEnabled(true);
-                                wv.setWebViewClient(new WebViewClient() {
-                                    @Override
-                                    public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                                        if (Build.VERSION.SDK_INT >= 21) {
-                                            view.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+                                try {
+                                    URL url = new URL(query);
+                                    Log.i(TAG, query);
+                                    wv.loadUrl(url.toString());
+                                    WebSettings wb = wv.getSettings();
+                                    wb.setJavaScriptEnabled(true);
+                                    wv.setWebViewClient(new WebViewClient() {
+                                        @Override
+                                        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                                            if (Build.VERSION.SDK_INT >= 21) {
+                                                view.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+                                            }
+                                            view.getSettings().setJavaScriptEnabled(true);
+                                            view.loadUrl(url);
+                                            return true;
                                         }
-                                        view.getSettings().setJavaScriptEnabled(true);
-                                        view.loadUrl(url);
-                                        return true;
-                                    }
-                                });
+                                    });
 
-                                alert.setView(wv);
-                                alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        dialog.dismiss();
-                                    }
-                                });
-                                alert.show();
-                                break;
+                                    alert.setView(wv);
+                                    alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.dismiss();
+                                        }
+                                    });
+                                    alert.show();
+                                    break;
+                                } catch (MalformedURLException e) {
+                                    Log.e(TAG, e.toString());
+                                    Toast.makeText(context, "Unable to find lyrics at this time.", Toast.LENGTH_LONG).show();
+                                } catch (Exception e) {
+                                    Log.e(TAG, e.toString());
+                                    Toast.makeText(context, "Unable to find lyrics at this time.", Toast.LENGTH_LONG).show();
+                                }
+
                             default:
                                 break;
                         }
