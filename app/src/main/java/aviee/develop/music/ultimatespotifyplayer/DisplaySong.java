@@ -87,6 +87,12 @@ public class DisplaySong extends AppCompatActivity {
 
         setupSeekBar();
 
+        if (MainActivity.stayWithinApplication) {
+            mediaPlayController.setImageResource(R.drawable.baseline_pause_circle_filled_black_48);
+        } else {
+            mediaPlayController.setImageResource(R.drawable.baseline_play_circle_filled_white_black_48);
+        }
+
 
     }
 

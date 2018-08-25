@@ -463,6 +463,12 @@ public class MainActivity extends Activity implements
                 }
             });
         }
+
+        if (shuffle) {
+            shuffleButton.setText(getString(R.string.NoShuffle));
+        } else {
+            shuffleButton.setText(getString(R.string.Shuffle));
+        }
     }
 
     @Override
@@ -646,6 +652,172 @@ public class MainActivity extends Activity implements
     }
 
 
+    protected class SpeechRecognitionListener implements RecognitionListener {
+
+        @Override
+        public void onBeginningOfSpeech() {
+            Log.d(TAG, "onBeginingOfSpeech");
+        }
+
+        @Override
+        public void onBufferReceived(byte[] buffer) {
+
+        }
+
+        @Override
+        public void onEndOfSpeech() {
+            Log.d(TAG, "onEndOfSpeech");
+        }
+
+        @Override
+        public void onError(int error) {
+            Log.d(TAG, "error = " + error);
+        }
+
+        @Override
+        public void onEvent(int eventType, Bundle params) {
+
+        }
+
+        @Override
+        public void onPartialResults(Bundle partialResults) {
+
+            Log.i(TAG, "Partial results: " + partialResults.toString());
+
+        }
+
+        @Override
+        public void onReadyForSpeech(Bundle params) {
+            Log.d(TAG, "onReadyForSpeech"); //$NON-NLS-1$
+        }
+
+        @Override
+        public void onResults(Bundle results) {
+            Log.d(TAG, "onResults");
+            ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+            // matches are the return values of speech recognition engine
+            // Use these values for whatever you wish to do
+            if (!matches.isEmpty()) {
+                String query = matches.get(0).toString();
+                Snackbar.make(speechView, query, Snackbar.LENGTH_LONG).show();
+                String[] queryArray = query.split(" ", 2);
+                if (queryArray.length > 1) {
+                    String command = queryArray[0];
+                    switch (command.toLowerCase()) {
+                        case "play":
+                            String songName = queryArray[1];
+                            for (int i = 0; i < songList.size(); i++) {
+                                if (songList.get(i).getTrackName().toLowerCase().contains(songName.toLowerCase())) {
+                                    Song song = songList.get(i);
+                                    playGivenSong(song, i);
+                                }
+                            }
+                            break;
+                        case "shuffle":
+                            if (queryArray[1].toLowerCase().equals(getString(R.string.ShuffleSomeMusic).toLowerCase())) {
+                                shuffle = true;
+                                shuffleButton.setText(getString(R.string.NoShuffle));
+                                selectRandomSong();
+                            }
+                        default:
+                            for (int i = 0; i < songList.size(); i++) {
+                                songName = matches.get(0).toString();
+                                if (songList.get(i).getTrackName().toLowerCase().contains(songName.toLowerCase())) {
+                                    Song song = songList.get(i);
+                                    playGivenSong(song, i);
+                                }
+                            }
+                            break;
+                    }
+                } else if (queryArray.length == 1) {
+                    String command = queryArray[0];
+                    switch (command.toLowerCase()) {
+                        case "shuffle":
+                            shuffle = true;
+                            shuffleButton.setText(getString(R.string.NoShuffle));
+                            selectRandomSong();
+                            break;
+                        case "random":
+                            shuffle = true;
+                            shuffleButton.setText(getString(R.string.NoShuffle));
+                            selectRandomSong();
+                            break;
+                        case "pause":
+                            mPlayer.pause(new Player.OperationCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    Log.i("MainActivity", "Paused Player");
+                                }
+
+                                @Override
+                                public void onError(Error error) {
+                                    Log.e("MainActivity", "Unable to play song.");
+                                }
+                            });
+                            break;
+                        case "play":
+                            shuffle = true;
+                            selectRandomSong();
+                            break;
+                        case "resume":
+                            mPlayer.resume(new Player.OperationCallback() {
+                                @Override
+                                public void onSuccess() {
+
+                                }
+
+                                @Override
+                                public void onError(Error error) {
+
+                                }
+                            });
+                            break;
+                        case "start":
+                            mPlayer.resume(new Player.OperationCallback() {
+                                @Override
+                                public void onSuccess() {
+
+                                }
+
+                                @Override
+                                public void onError(Error error) {
+
+                                }
+                            });
+                            break;
+                        default:
+                            for (int i = 0; i < songList.size(); i++) {
+                                String songName = matches.get(0).toString();
+                                if (songList.get(i).getTrackName().toLowerCase().contains(songName.toLowerCase())) {
+                                    Song song = songList.get(i);
+                                    playGivenSong(song, i);
+                                }
+                            }
+                            break;
+
+                    }
+                }
+            } else {
+                Snackbar.make(speechView, "Unable to find results.", Snackbar.LENGTH_LONG).show();
+            }
+        }
+
+        @Override
+        public void onRmsChanged(float rmsdB) {
+        }
+    }
+
+    private void playGivenSong(Song song, int i) {
+        currentSongPlaying = song;
+        mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
+        Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+        currentSelected = i;
+        mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+        selectedPosition = i;
+        songBaseAdapter.notifyDataSetChanged();
+        listView.smoothScrollToPosition(i);
+    }
+
     public class HttpGetRequest extends AsyncTask<String, Void, String> {
         public static final String REQUEST_METHOD = "GET";
         public static final int READ_TIMEOUT = 15000;
@@ -709,6 +881,7 @@ public class MainActivity extends Activity implements
                         song.setSongLength(track.getDuration_ms());
                         Album album = track.getAlbum();
                         song.setAlbumImage(album.getImages()[0].getUrl());
+                        song.setAlbumID(album.getId());
                         song.setReleaseDate(track.getAlbum().getRelease_date());
                         StringBuilder artists = new StringBuilder();
                         ArrayList<String> artistUris = new ArrayList<>();
@@ -762,151 +935,6 @@ public class MainActivity extends Activity implements
                     Log.e("MainActivity", e.toString());
                 }
             }
-        }
-    }
-
-    protected class SpeechRecognitionListener implements RecognitionListener {
-
-        @Override
-        public void onBeginningOfSpeech() {
-            Log.d(TAG, "onBeginingOfSpeech");
-        }
-
-        @Override
-        public void onBufferReceived(byte[] buffer) {
-
-        }
-
-        @Override
-        public void onEndOfSpeech() {
-            Log.d(TAG, "onEndOfSpeech");
-        }
-
-        @Override
-        public void onError(int error) {
-            Log.d(TAG, "error = " + error);
-        }
-
-        @Override
-        public void onEvent(int eventType, Bundle params) {
-
-        }
-
-        @Override
-        public void onPartialResults(Bundle partialResults) {
-
-            Log.i(TAG, "Partial results: " + partialResults.toString());
-
-        }
-
-        @Override
-        public void onReadyForSpeech(Bundle params) {
-            Log.d(TAG, "onReadyForSpeech"); //$NON-NLS-1$
-        }
-
-        @Override
-        public void onResults(Bundle results) {
-            Log.d(TAG, "onResults");
-            ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-            // matches are the return values of speech recognition engine
-            // Use these values for whatever you wish to do
-            if (!matches.isEmpty()) {
-                String query = matches.get(0).toString();
-                Snackbar.make(speechView, query, Snackbar.LENGTH_LONG).show();
-                String[] queryArray = query.split(" ", 2);
-                if (queryArray.length > 1) {
-                    String command = queryArray[0];
-                    switch (command.toLowerCase()) {
-                        case "play":
-                            String songName = queryArray[1];
-                            for (int i = 0; i < songList.size(); i++) {
-                                if (songList.get(i).getTrackName().toLowerCase().contains(songName.toLowerCase())) {
-                                    Song song = songList.get(i);
-                                    currentSongPlaying = song;
-                                    mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-                                    Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
-                                    currentSelected = i;
-                                    mPlayer.playUri(null, song.getTrackValue(), 0, 0);
-                                    selectedPosition = i;
-                                    songBaseAdapter.notifyDataSetChanged();
-                                    listView.smoothScrollToPosition(i);
-                                }
-                            }
-                            break;
-                        case "shuffle":
-                            if (queryArray[1].toLowerCase().equals(getString(R.string.ShuffleSomeMusic).toLowerCase())) {
-                                shuffle = true;
-                                shuffleButton.setText(getString(R.string.NoShuffle));
-                                selectRandomSong();
-                            }
-                            break;
-                    }
-                } else if (queryArray.length == 1) {
-                    String command = queryArray[0];
-                    switch (command.toLowerCase()) {
-                        case "shuffle":
-                            shuffle = true;
-                            shuffleButton.setText(getString(R.string.NoShuffle));
-                            selectRandomSong();
-                            break;
-                        case "random":
-                            shuffle = true;
-                            shuffleButton.setText(getString(R.string.NoShuffle));
-                            selectRandomSong();
-                            break;
-                        case "pause":
-                            mPlayer.pause(new Player.OperationCallback() {
-                                @Override
-                                public void onSuccess() {
-                                    Log.i("MainActivity", "Paused Player");
-                                }
-
-                                @Override
-                                public void onError(Error error) {
-                                    Log.e("MainActivity", "Unable to play song.");
-                                }
-                            });
-                            break;
-                        case "play":
-                            shuffle = true;
-                            selectRandomSong();
-                            break;
-                        case "resume":
-                            mPlayer.resume(new Player.OperationCallback() {
-                                @Override
-                                public void onSuccess() {
-
-                                }
-
-                                @Override
-                                public void onError(Error error) {
-
-                                }
-                            });
-                            break;
-                        case "start":
-                            mPlayer.resume(new Player.OperationCallback() {
-                                @Override
-                                public void onSuccess() {
-
-                                }
-
-                                @Override
-                                public void onError(Error error) {
-
-                                }
-                            });
-                            break;
-
-                    }
-                }
-            } else {
-                Snackbar.make(speechView, "Unable to find results.", Snackbar.LENGTH_LONG).show();
-            }
-        }
-
-        @Override
-        public void onRmsChanged(float rmsdB) {
         }
     }
 }

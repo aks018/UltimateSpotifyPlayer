@@ -1,6 +1,8 @@
 package aviee.develop.music.ultimatespotifyplayer.adapter;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -10,6 +12,8 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.BaseAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
@@ -32,19 +36,24 @@ import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import aviee.develop.music.ultimatespotifyplayer.MainActivity;
+import aviee.develop.music.ultimatespotifyplayer.R;
 import aviee.develop.music.ultimatespotifyplayer.YoutubeActivity;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Album;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Artists;
+import aviee.develop.music.ultimatespotifyplayer.pojo.Items;
 import aviee.develop.music.ultimatespotifyplayer.pojo.RandomItems;
 import aviee.develop.music.ultimatespotifyplayer.pojo.RandomSong;
 import aviee.develop.music.ultimatespotifyplayer.pojo.RandomTracks;
 import aviee.develop.music.ultimatespotifyplayer.pojo.Song;
+import aviee.develop.music.ultimatespotifyplayer.pojo.Track;
+import aviee.develop.music.ultimatespotifyplayer.pojo.UserLibrary;
 
 public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializable {
 
@@ -116,11 +125,11 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
         holder.trackName.setText(songObject.getTrackName());
         holder.artistName.setText(songObject.getArtist());
         holder.albumName.setText(songObject.getAlbum());
-        holder.dropDown.setImageResource(aviee.develop.music.ultimatespotifyplayer.R.drawable.ic_three_dots);
+        holder.dropDown.setImageResource(R.drawable.baseline_more_vert_white_24);
 
         if (MainActivity.selectedPosition == position && MainActivity.currentSongPlaying != null &&
                 MainActivity.currentSongPlaying == songObject) {
-            rowView.setBackgroundColor(Color.DKGRAY);
+            rowView.setBackgroundColor(Color.GREEN);
             holder.trackName.setTypeface(null, Typeface.BOLD_ITALIC);
         }
 
@@ -160,10 +169,33 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
                                 } catch (ExecutionException e) {
                                     e.printStackTrace();
                                 }
+                            case R.id.viewLyrics:
+                                AlertDialog.Builder alert = new AlertDialog.Builder(context);
+                                alert.setTitle("Title here");
+
+                                WebView wv = new WebView(context);
+                                String query = songObject.getArtist() + " " + songObject.getTrackName();
+                                wv.loadUrl("http:\\www.genius.com/search?q=" + query);
+                                wv.setWebViewClient(new WebViewClient() {
+                                    @Override
+                                    public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                                        view.loadUrl(url);
+                                        return true;
+                                    }
+                                });
+
+                                alert.setView(wv);
+                                alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        dialog.dismiss();
+                                    }
+                                });
+                                alert.show();
+                                break;
                             default:
                                 break;
                         }
-
                         return true;
                     }
                 });

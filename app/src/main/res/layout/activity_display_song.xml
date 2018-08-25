@@ -5,13 +5,13 @@
     android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#b7b0b0"
+    android:background="#131313"
     tools:context=".DisplaySong">
 
     <ImageView
         android:id="@+id/songImageView"
         android:layout_width="500px"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="25dp"
         android:layout_height="500px"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
@@ -34,7 +34,7 @@
         android:scrollHorizontally="true"
         android:text="TextView"
         android:textAlignment="center"
-        android:textColor="@color/DarkOliveGreen"
+        android:textColor="@color/LightSkyBlue"
         android:textSize="24dp"
         android:textStyle="bold" />
 
@@ -55,16 +55,18 @@
         android:scrollHorizontally="true"
         android:text="TextView"
         android:textAlignment="center"
-        android:textColor="@color/DarkOliveGreen"
+        android:textColor="@color/LightSkyBlue"
+        android:layout_above="@+id/relativeLayoutMusicPlayer"
         android:textSize="22dp" />
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="100dp"
+        android:id="@+id/relativeLayoutMusicPlayer"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentStart="true"
-        android:background="@color/CadetBlue">
+        android:background="@color/LightSkyBlue">
 
         <SeekBar
             android:id="@+id/seekBar"

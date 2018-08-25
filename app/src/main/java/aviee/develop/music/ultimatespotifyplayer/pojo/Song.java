@@ -14,6 +14,7 @@ public class Song implements Serializable {
     String getTotalArtistTracks;
     List<String> artistUri;
     String songLength;
+    String albumID;
 
     public String getArtist() {
         return artist;
@@ -85,5 +86,13 @@ public class Song implements Serializable {
 
     public void setSongLength(String songLength) {
         this.songLength = songLength;
+    }
+
+    public String getAlbumID() {
+        return albumID;
+    }
+
+    public void setAlbumID(String albumID) {
+        this.albumID = albumID;
     }
 }
