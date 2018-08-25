@@ -7,11 +7,15 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.BaseAdapter;
@@ -64,6 +68,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
     String TAG = "SongBaseAdapter";
     ValueFilter valueFilter;
     public String currentArtist;
+    public WebView wv;
 
     //Constructor for MusicBaseAdapter passing in the context of the activity using the adapter and the arraylist holding the music objects
     public SongBaseAdapter(Context mainActivity, LinkedList<Song> songArrayList) {
@@ -129,7 +134,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
 
         if (MainActivity.selectedPosition == position && MainActivity.currentSongPlaying != null &&
                 MainActivity.currentSongPlaying == songObject) {
-            rowView.setBackgroundColor(Color.GREEN);
+            rowView.setBackgroundColor(Color.parseColor("#90EE90"));
             holder.trackName.setTypeface(null, Typeface.BOLD_ITALIC);
         }
 
@@ -171,14 +176,20 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
                                 }
                             case R.id.viewLyrics:
                                 AlertDialog.Builder alert = new AlertDialog.Builder(context);
-                                alert.setTitle("Title here");
-
-                                WebView wv = new WebView(context);
-                                String query = songObject.getArtist() + " " + songObject.getTrackName();
-                                wv.loadUrl("http:\\www.genius.com/search?q=" + query);
+                                wv = new WebView(context);
+                                String q = songObject.getArtist() + " " + songObject.getTrackName() + " lyrics";
+                                String query = "https://www.google.com/search?q=" + q;
+                                Log.i(TAG, query);
+                                wv.loadUrl(query);
+                                WebSettings wb = wv.getSettings();
+                                wb.setJavaScriptEnabled(true);
                                 wv.setWebViewClient(new WebViewClient() {
                                     @Override
                                     public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                                        if (Build.VERSION.SDK_INT >= 21) {
+                                            view.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+                                        }
+                                        view.getSettings().setJavaScriptEnabled(true);
                                         view.loadUrl(url);
                                         return true;
                                     }
@@ -288,7 +299,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
                     return null;
                 }
             } catch (IOException e) {
-                Log.e("MainActivity", e.toString());
+                Log.e(TAG, e.toString());
             }
 
 
@@ -364,7 +375,126 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
             notifyDataSetChanged();
         }
 
+    }
 
+
+    private class CustomeGestureDetector extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            if (e1 == null || e2 == null) return false;
+            if (e1.getPointerCount() > 1 || e2.getPointerCount() > 1) return false;
+            else {
+                try { // right to left swipe .. go to next page
+                    if (e1.getX() - e2.getX() > 100 && Math.abs(velocityX) > 800) {
+                        //do your stuff
+                        show_toast("swipe left");
+                        return true;
+                    } //left to right swipe .. go to prev page
+                    else if (e2.getX() - e1.getX() > 100 && Math.abs(velocityX) > 800) {
+                        //do your stuff
+                        show_toast("swipe right");
+                        return true;
+                    } //bottom to top, go to next document
+                    else if (e1.getY() - e2.getY() > 100 && Math.abs(velocityY) > 800
+                            && wv.getScrollY() >= wv.getScale() * (wv.getContentHeight() - wv.getHeight())) {
+                        //do your stuff
+                        show_toast("swipe up");
+                        return true;
+                    } //top to bottom, go to prev document
+                    else if (e2.getY() - e1.getY() > 100 && Math.abs(velocityY) > 800) {
+                        //do your stuff
+                        show_toast("swipe down");
+                        return true;
+                    }
+                } catch (Exception e) { // nothing
+                }
+                return false;
+            }
+        }
+
+        void show_toast(final String text) {
+            Toast t = Toast.makeText(context, text, Toast.LENGTH_SHORT);
+            t.show();
+        }
+    }
+
+
+    public class OnSwipeTouchListener implements View.OnTouchListener {
+        private GestureDetector gestureDetector;
+
+        public OnSwipeTouchListener(Context c) {
+            gestureDetector = new GestureDetector(c, new GestureListener());
+        }
+
+        public boolean onTouch(final View view, final MotionEvent motionEvent) {
+            return gestureDetector.onTouchEvent(motionEvent);
+        }
+
+        private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
+            private static final int SWIPE_THRESHOLD = 100;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            // Determines the fling velocity and then fires the appropriate swipe event accordingly
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                boolean result = false;
+                try {
+                    float diffY = e2.getY() - e1.getY();
+                    float diffX = e2.getX() - e1.getX();
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                        if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                            if (diffX > 0) {
+                                onSwipeRight();
+                            } else {
+                                onSwipeLeft();
+                            }
+                        }
+                    } else {
+                        if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                            if (diffY > 0) {
+                                onSwipeDown();
+                            } else {
+                                onSwipeUp();
+                            }
+                        }
+                    }
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+                return result;
+            }
+        }
+
+        public void onSwipeRight() {
+            wv.goBack();
+            show_toast("right");
+        }
+
+        public void onSwipeLeft() {
+            wv.goForward();
+            show_toast("left");
+
+        }
+
+        public void onSwipeUp() {
+            show_toast("up");
+
+        }
+
+        public void onSwipeDown() {
+            show_toast("down");
+
+        }
+
+        void show_toast(final String text) {
+            Toast t = Toast.makeText(context, text, Toast.LENGTH_SHORT);
+            t.show();
+        }
     }
 }
 

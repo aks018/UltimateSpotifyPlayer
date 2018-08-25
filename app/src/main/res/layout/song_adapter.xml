@@ -21,7 +21,7 @@
         android:maxLines="1"
         android:text="Song Name"
         android:textAllCaps="true"
-        android:textColor="@color/DarkBlue"
+        android:textColor="@color/LightSkyBlue"
         android:textSize="18dp"
         android:textStyle="bold" />
 
@@ -35,7 +35,7 @@
         android:fontFamily="sans-serif-condensed"
         android:maxLines="1"
         android:text="Artist Name"
-        android:textColor="@color/DarkBlue"
+        android:textColor="@color/LightSkyBlue"
         android:textSize="16dp"
         android:textStyle="italic" />
 
@@ -51,7 +51,7 @@
         android:fontFamily="sans-serif-condensed"
         android:maxLines="1"
         android:text="Album Name"
-        android:textColor="@color/DarkBlue"
+        android:textColor="@color/LightSkyBlue"
         android:textSize="16dp"
         android:textStyle="italic" />
 
@@ -68,7 +68,7 @@
         android:fontFamily="sans-serif-condensed"
         android:maxLines="1"
         android:text="~"
-        android:textColor="@color/DarkBlue"
+        android:textColor="@color/LightSkyBlue"
         android:textSize="16dp"
         android:textStyle="italic" />
 
