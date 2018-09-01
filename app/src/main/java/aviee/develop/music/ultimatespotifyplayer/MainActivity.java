@@ -40,6 +40,7 @@ import android.widget.Toast;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kobakei.ratethisapp.RateThisApp;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -77,18 +78,18 @@ public class MainActivity extends Activity implements
 
     private String TAG = "MainActivity";
     // TODO: Replace with your client ID
-    private static final String CLIENT_ID = "194a6543e06246dba32f77c9b9214da5";
+    public static final String CLIENT_ID = "194a6543e06246dba32f77c9b9214da5";
 
     // TODO: Replace with your redirect URI
-    private static final String REDIRECT_URI = "https://google.com";
+    public static final String REDIRECT_URI = "https://google.com";
 
     public static Player mPlayer;
 
-    private static final int REQUEST_CODE = 1337;
+    public static final int REQUEST_CODE = 1337;
 
     public static String token = "";
 
-    LinkedList<Song> songList;
+    ArrayList<Song> songList;
 
     SongBaseAdapter songBaseAdapter;
 
@@ -115,7 +116,7 @@ public class MainActivity extends Activity implements
     public static SpeechRecognizer mSpeechRecognizer;
     private Intent mSpeechRecognizerIntent;
     private boolean mIsListening;
-    private static boolean authenticate;
+    public static boolean authenticate;
     public static boolean stayWithinApplication;
 
     private View speechView;
@@ -138,7 +139,7 @@ public class MainActivity extends Activity implements
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        songList = (LinkedList<Song>) savedInstanceState.getSerializable("songList");
+        songList = (ArrayList<Song>) savedInstanceState.getSerializable("songList");
         currentSongPlaying = (Song) savedInstanceState.getSerializable(getString(R.string.SelectedSong));
 
         authenticate = (Boolean) savedInstanceState.getBoolean(getString(R.string.authenticate));
@@ -169,6 +170,13 @@ public class MainActivity extends Activity implements
         songBaseAdapter.notifyDataSetChanged();
     }
 
+    private void showRateDialog() {
+        // Monitor launch times and interval from installation
+        RateThisApp.onCreate(this);
+        // If the condition is satisfied, "Rate this app" dialog will be shown
+        RateThisApp.showRateDialogIfNeeded(this);
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -195,7 +203,7 @@ public class MainActivity extends Activity implements
 
 
         progressBar = (ProgressBar) findViewById(R.id.secondBar);
-        songList = new LinkedList<>();
+        songList = new ArrayList<>();
         mSelectedTrackTitle = (TextView) findViewById(R.id.selected_track_title);
         mSelectedTrackImage = (ImageView) findViewById(R.id.selected_track_image);
         mPlayerControl = (ImageView) findViewById(R.id.player_control);
@@ -241,6 +249,7 @@ public class MainActivity extends Activity implements
             builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
             AuthenticationRequest request = builder.build();
             AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+
         }
 
         shuffleButton.setVisibility(View.INVISIBLE);
@@ -432,7 +441,6 @@ public class MainActivity extends Activity implements
                         mPlayer.addConnectionStateCallback(MainActivity.this);
                         mPlayer.addNotificationCallback(MainActivity.this);
                         token = response.getAccessToken();
-
                         authenticate = true;
                     }
 
@@ -608,7 +616,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onLoggedIn() {
-        Log.d("MainActivity", "User logged in");
+        Log.d(TAG, "User logged in");
 
         //First thing we want to do is to get all of the songs for the user given.
 
@@ -633,22 +641,45 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onLoggedOut() {
-        Log.d("MainActivity", "User logged out");
+        Log.d(TAG, "User logged out");
     }
 
     @Override
     public void onLoginFailed(Error var1) {
-        Log.d("MainActivity", "Login failed");
+        Log.d(TAG, "Login failed");
+        Toast.makeText(getApplicationContext(), "Unable to connect to account.", Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "If account is not premium, please upgrade account to use application.", Toast.LENGTH_LONG).show();
+
+        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
+        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
+        AuthenticationRequest request = builder.build();
+        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+
     }
 
     @Override
     public void onTemporaryError() {
-        Log.d("MainActivity", "Temporary error occurred");
+
+        Log.d(TAG, "Temporary error occurred");
+        Toast.makeText(getApplicationContext(), "Unable to connect to account. Please try again.", Toast.LENGTH_SHORT).show();
+
+
+        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
+        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
+        AuthenticationRequest request = builder.build();
+        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+
+
     }
 
     @Override
     public void onConnectionMessage(String message) {
-        Log.d("MainActivity", "Received connection message: " + message);
+        Log.d(TAG, "Received connection message: " + message);
+    }
+
+    public void goToSettings(View view) {
+        Intent intent = new Intent(getApplicationContext(), MyPreferencesActivity.class);
+        startActivity(intent);
     }
 
 
@@ -921,6 +952,8 @@ public class MainActivity extends Activity implements
                 progressBar.setVisibility(View.INVISIBLE);
                 songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
                 listView.setAdapter(songBaseAdapter);
+
+                showRateDialog();
             } else {
                 try {
                     //Some url endpoint that you may have

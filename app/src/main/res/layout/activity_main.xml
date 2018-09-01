@@ -14,11 +14,12 @@
 
         <android.support.v7.widget.SearchView
             android:id="@+id/searchView"
-            android:background="@color/LightBlue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
+            android:layout_margin="1.5dp"
+            android:background="@color/LightBlue"
             android:clickable="true">
 
         </android.support.v7.widget.SearchView>
@@ -83,7 +84,6 @@
             android:layout_marginRight="40dp"
             android:ellipsize="marquee"
             android:focusable="true"
-            android:textColor="@color/Black"
             android:focusableInTouchMode="true"
             android:fontFamily="sans-serif-condensed"
             android:marqueeRepeatLimit="marquee_forever"
@@ -91,7 +91,8 @@
             android:paddingRight="8dp"
             android:scrollHorizontally="true"
             android:singleLine="true"
-            android:text="Currently no track selected" />
+            android:text="Currently no track selected"
+            android:textColor="@color/Black" />
 
         <ImageView
             android:id="@+id/player_control"
@@ -118,9 +119,9 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/toolbar4"
         android:layout_alignParentEnd="true"
-        app:backgroundTint="@color/LightGreen"
         android:layout_gravity="end|bottom"
-        android:src="@drawable/baseline_mic_black_24" />
+        android:src="@drawable/baseline_mic_black_24"
+        app:backgroundTint="@color/LightGreen" />
 
 
 </RelativeLayout>
