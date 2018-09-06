@@ -57,9 +57,7 @@ public class DisplaySong extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_song);
 
-
         displaySong = MainActivity.currentSongPlaying;
-
         songImageView = (ImageView) findViewById(R.id.songImageView);
         displayTrackName = findViewById(R.id.textViewTrackName);
         displayAlbumName = findViewById(R.id.textViewAlbum);
@@ -100,9 +98,11 @@ public class DisplaySong extends AppCompatActivity {
         if (MainActivity.shuffle) {
             random.setImageResource(R.drawable.baseline_shuffle_white_48);
             MainActivity.shuffle = false;
+            MainActivity.shuffleButton.setText(getString(R.string.Shuffle));
         } else {
             random.setImageResource(R.mipmap.baseline_shuffle_black_48);
             MainActivity.shuffle = true;
+            MainActivity.shuffleButton.setText(getString(R.string.NoShuffle));
         }
     }
 
@@ -214,7 +214,7 @@ public class DisplaySong extends AppCompatActivity {
         }
     }
 
-    @Override
+   /* @Override
     protected void onResume() {
         super.onResume();
         Log.i(TAG, "onResume");
@@ -253,7 +253,7 @@ public class DisplaySong extends AppCompatActivity {
                 });
             }
         }
-    }
+    }*/
 
     @Override
     protected void onDestroy() {
@@ -264,7 +264,7 @@ public class DisplaySong extends AppCompatActivity {
         super.onDestroy();
     }
 
-    @Override
+    /*@Override
     protected void onStop() {
         super.onStop();
         Log.i(TAG, "onStop");
@@ -272,7 +272,7 @@ public class DisplaySong extends AppCompatActivity {
         if (cache != null) {
             cache.flush();
         }
-    }
+    }*/
 
     public void previousOnClick(View view) {
         if (MainActivity.mPlayer != null) {

@@ -2,20 +2,26 @@ package aviee.develop.music.ultimatespotifyplayer;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.media.AudioManager;
+import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ResultReceiver;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.SearchView;
@@ -111,7 +117,7 @@ public class MainActivity extends Activity implements
 
     public static boolean shuffle;
 
-    Button shuffleButton;
+    public static Button shuffleButton;
 
     public static SpeechRecognizer mSpeechRecognizer;
     private Intent mSpeechRecognizerIntent;
@@ -122,6 +128,8 @@ public class MainActivity extends Activity implements
     private View speechView;
 
     private boolean prevSelected;
+
+    MediaSession mSession;
 
 
     @Override
@@ -257,6 +265,21 @@ public class MainActivity extends Activity implements
 
 
         setUpListView();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mSession = new MediaSession(this, "MusicService");
+            mSession.setCallback(new MediaSession.Callback() {
+                @Override
+                public void onCommand(@NonNull String command, @Nullable Bundle args, @Nullable ResultReceiver cb) {
+                    super.onCommand(command, args, cb);
+                }
+            });
+            mSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
+
+        }
+
+
     }
 
     private void toolbarOnClick() {
@@ -271,46 +294,6 @@ public class MainActivity extends Activity implements
                 }
             }
         });
-    }
-
-    FloatingActionButton fab;
-
-    private void setUpSpeech() {
-        fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mPlayer.pause(new Player.OperationCallback() {
-                    @Override
-                    public void onSuccess() {
-                        Log.i(TAG, "Paused Player");
-                    }
-
-                    @Override
-                    public void onError(Error error) {
-                        Log.e(TAG, error.toString());
-                    }
-                });
-                if (!mIsListening) {
-                    mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
-                }
-                speechView = view;
-
-                Snackbar.make(speechView, "Say Shuffle or Random to play a random song.\n" +
-                        "Say Play {Song Title} to play a specific song.", Snackbar.LENGTH_LONG).show();
-
-
-            }
-        });
-
-        mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-        mSpeechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
-                this.getPackageName());
-        SpeechRecognitionListener listener = new SpeechRecognitionListener();
-        mSpeechRecognizer.setRecognitionListener(listener);
     }
 
     public void shuffleSongs(View view) {
@@ -453,7 +436,7 @@ public class MainActivity extends Activity implements
         }
     }
 
-    @Override
+    /*@Override
     protected void onResume() {
         super.onResume();
         Log.i(TAG, "onResume");
@@ -501,6 +484,16 @@ public class MainActivity extends Activity implements
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i(TAG, "onStop");
+        HttpResponseCache cache = HttpResponseCache.getInstalled();
+        if (cache != null) {
+            cache.flush();
+        }
+    }*/
+
+    @Override
     protected void onDestroy() {
         Log.i(TAG, "onDestroy");
         Spotify.destroyPlayer(this);
@@ -513,15 +506,6 @@ public class MainActivity extends Activity implements
         super.onDestroy();
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.i(TAG, "onStop");
-        HttpResponseCache cache = HttpResponseCache.getInstalled();
-        if (cache != null) {
-            cache.flush();
-        }
-    }
 
     @Override
     public void onPlaybackEvent(PlayerEvent playerEvent) {
@@ -682,6 +666,168 @@ public class MainActivity extends Activity implements
         startActivity(intent);
     }
 
+
+    public class HttpGetRequest extends AsyncTask<String, Void, String> {
+        public static final String REQUEST_METHOD = "GET";
+        public static final int READ_TIMEOUT = 15000;
+        public static final int CONNECTION_TIMEOUT = 15000;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressBar.setVisibility(View.VISIBLE);
+
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String stringUrl = params[0];
+            String result = "NO CONNECTION MADE";
+
+
+            try {
+                //Create a URL object holding our url
+                URL myUrl = new URL(stringUrl);
+                //Create a connection
+                HttpURLConnection connection = (HttpURLConnection)
+                        myUrl.openConnection();
+
+                //Set methods and timeouts
+                connection.setRequestMethod(REQUEST_METHOD);
+                connection.setReadTimeout(READ_TIMEOUT);
+                connection.setConnectTimeout(CONNECTION_TIMEOUT);
+                connection.setUseCaches(true);
+
+                connection.setRequestProperty("Authorization", "Bearer " + token);
+                connection.setRequestProperty("Accept", "application/json");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.addRequestProperty("Cache-Control", "max-age=0");
+
+                connection.setRequestMethod("GET");
+
+                //Connect to our url
+                connection.connect();
+
+                if (connection.getResponseCode() == 200) {
+                    InputStream responseBody = connection.getInputStream();
+                    InputStreamReader responseBodyReader =
+                            new InputStreamReader(responseBody, "UTF-8");
+
+
+                    //Create object mapper object and map JSON that is retrieved into an Arraylist of POJO we created called Music_Results
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    //If property is unknown, mark it as ok so application does not crash
+                    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                    objectMapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
+
+
+                    UserLibrary userLibrary = objectMapper.readValue(responseBodyReader, UserLibrary.class);
+
+                    for (Items item : userLibrary.getItems()) {
+                        Song song = new Song();
+                        Track track = item.getTrack();
+                        song.setAlbum(track.getAlbum().getName());
+                        song.setSongLength(track.getDuration_ms());
+                        Album album = track.getAlbum();
+                        song.setAlbumImage(album.getImages()[0].getUrl());
+                        song.setAlbumID(album.getId());
+                        song.setReleaseDate(track.getAlbum().getRelease_date());
+                        StringBuilder artists = new StringBuilder();
+                        ArrayList<String> artistUris = new ArrayList<>();
+                        for (Artists artist : track.getArtists()) {
+                            artists.append(artist.getName() + ", ");
+                            artistUris.add(artist.getUri());
+                        }
+                        final String allArtists = artists.toString().replaceAll(", $", "");
+                        song.setArtist(allArtists);
+                        song.setTrackValue(track.getUri());
+                        song.setTrackName(track.getName());
+                        song.setArtistUri(artistUris);
+
+
+                        songList.add(song);
+                    }
+
+                    return userLibrary.getNext();
+
+                } else {
+                    return result;
+                }
+            } catch (IOException e) {
+                Log.e("MainActivity", e.toString());
+            }
+
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            if (result == null || result.equals("null")) {
+                fab.setVisibility(View.VISIBLE);
+                shuffleButton.setVisibility(View.VISIBLE);
+                progressBar.setVisibility(View.INVISIBLE);
+                songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
+                listView.setAdapter(songBaseAdapter);
+
+                showRateDialog();
+            } else {
+                try {
+                    //Some url endpoint that you may have
+                    String myUrl = result;
+                    //Instantiate new instance of our class
+                    HttpGetRequest getRequest = new HttpGetRequest();
+                    //Perform the doInBackground method, passing in our url
+                    getRequest.execute(myUrl).get();
+                } catch (InterruptedException e) {
+                    Log.e("MainActivity", e.toString());
+                } catch (ExecutionException e) {
+                    Log.e("MainActivity", e.toString());
+                }
+            }
+        }
+    }
+
+    FloatingActionButton fab;
+
+    private void setUpSpeech() {
+        fab = findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mPlayer.pause(new Player.OperationCallback() {
+                    @Override
+                    public void onSuccess() {
+                        Log.i(TAG, "Paused Player");
+                    }
+
+                    @Override
+                    public void onError(Error error) {
+                        Log.e(TAG, error.toString());
+                    }
+                });
+                if (!mIsListening) {
+                    mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
+                }
+                speechView = view;
+
+                Snackbar.make(speechView, "Say Shuffle or Random to play a random song.\n" +
+                        "Say Play {Song Title} to play a specific song.", Snackbar.LENGTH_LONG).show();
+
+
+            }
+        });
+
+        mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        mSpeechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
+                this.getPackageName());
+        SpeechRecognitionListener listener = new SpeechRecognitionListener();
+        mSpeechRecognizer.setRecognitionListener(listener);
+    }
 
     protected class SpeechRecognitionListener implements RecognitionListener {
 
@@ -849,125 +995,5 @@ public class MainActivity extends Activity implements
         listView.smoothScrollToPosition(i);
     }
 
-    public class HttpGetRequest extends AsyncTask<String, Void, String> {
-        public static final String REQUEST_METHOD = "GET";
-        public static final int READ_TIMEOUT = 15000;
-        public static final int CONNECTION_TIMEOUT = 15000;
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            progressBar.setVisibility(View.VISIBLE);
-
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            String stringUrl = params[0];
-            String result = "NO CONNECTION MADE";
-
-
-            try {
-                //Create a URL object holding our url
-                URL myUrl = new URL(stringUrl);
-                //Create a connection
-                HttpURLConnection connection = (HttpURLConnection)
-                        myUrl.openConnection();
-
-                //Set methods and timeouts
-                connection.setRequestMethod(REQUEST_METHOD);
-                connection.setReadTimeout(READ_TIMEOUT);
-                connection.setConnectTimeout(CONNECTION_TIMEOUT);
-                connection.setUseCaches(true);
-
-                connection.setRequestProperty("Authorization", "Bearer " + token);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.addRequestProperty("Cache-Control", "max-age=0");
-
-                connection.setRequestMethod("GET");
-
-                //Connect to our url
-                connection.connect();
-
-                if (connection.getResponseCode() == 200) {
-                    InputStream responseBody = connection.getInputStream();
-                    InputStreamReader responseBodyReader =
-                            new InputStreamReader(responseBody, "UTF-8");
-
-
-                    //Create object mapper object and map JSON that is retrieved into an Arraylist of POJO we created called Music_Results
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    //If property is unknown, mark it as ok so application does not crash
-                    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                    objectMapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
-
-
-                    UserLibrary userLibrary = objectMapper.readValue(responseBodyReader, UserLibrary.class);
-
-                    for (Items item : userLibrary.getItems()) {
-                        Song song = new Song();
-                        Track track = item.getTrack();
-                        song.setAlbum(track.getAlbum().getName());
-                        song.setSongLength(track.getDuration_ms());
-                        Album album = track.getAlbum();
-                        song.setAlbumImage(album.getImages()[0].getUrl());
-                        song.setAlbumID(album.getId());
-                        song.setReleaseDate(track.getAlbum().getRelease_date());
-                        StringBuilder artists = new StringBuilder();
-                        ArrayList<String> artistUris = new ArrayList<>();
-                        for (Artists artist : track.getArtists()) {
-                            artists.append(artist.getName() + ", ");
-                            artistUris.add(artist.getUri());
-                        }
-                        final String allArtists = artists.toString().replaceAll(", $", "");
-                        song.setArtist(allArtists);
-                        song.setTrackValue(track.getUri());
-                        song.setTrackName(track.getName());
-                        song.setArtistUri(artistUris);
-
-
-                        songList.add(song);
-                    }
-
-                    return userLibrary.getNext();
-
-                } else {
-                    return result;
-                }
-            } catch (IOException e) {
-                Log.e("MainActivity", e.toString());
-            }
-
-
-            return result;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            if (result == null || result.equals("null")) {
-                fab.setVisibility(View.VISIBLE);
-                shuffleButton.setVisibility(View.VISIBLE);
-                progressBar.setVisibility(View.INVISIBLE);
-                songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
-                listView.setAdapter(songBaseAdapter);
-
-                showRateDialog();
-            } else {
-                try {
-                    //Some url endpoint that you may have
-                    String myUrl = result;
-                    //Instantiate new instance of our class
-                    HttpGetRequest getRequest = new HttpGetRequest();
-                    //Perform the doInBackground method, passing in our url
-                    getRequest.execute(myUrl).get();
-                } catch (InterruptedException e) {
-                    Log.e("MainActivity", e.toString());
-                } catch (ExecutionException e) {
-                    Log.e("MainActivity", e.toString());
-                }
-            }
-        }
-    }
 }
