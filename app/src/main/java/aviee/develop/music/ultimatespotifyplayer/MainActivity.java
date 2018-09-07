@@ -575,7 +575,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onPlaybackError(Error error) {
-        Log.d("MainActivity", "Playback error received: " + error.name());
+        Log.d(TAG, "Playback error received: " + error.name());
         switch (error) {
             // Handle error type as necessary
             default:
@@ -586,10 +586,7 @@ public class MainActivity extends Activity implements
     @Override
     public void onLoggedIn() {
         Log.d(TAG, "User logged in");
-
-        //First thing we want to do is to get all of the songs for the user given.
-
-        //Some url endpoint that you may have
+        Toast.makeText(getApplicationContext(), "Successfully Logged In.", Toast.LENGTH_LONG).show();
         try {
             String myUrl = "https://api.spotify.com/v1/me/tracks";
             //String to place our result in
@@ -600,10 +597,11 @@ public class MainActivity extends Activity implements
             result = getRequest.execute(myUrl).get();
         } catch (InterruptedException e) {
             Log.e(TAG, e.toString());
+            Toast.makeText(getApplicationContext(), "Error in retrieving library", Toast.LENGTH_LONG).show();
         } catch (ExecutionException e) {
             Log.e(TAG, e.toString());
+            Toast.makeText(getApplicationContext(), "Error in retrieving library", Toast.LENGTH_LONG).show();
         }
-
 
     }
 
