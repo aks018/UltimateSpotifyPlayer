@@ -12,10 +12,12 @@ import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.net.Uri;
 import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.ResultReceiver;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -59,14 +61,19 @@ import com.spotify.sdk.android.player.Spotify;
 import com.spotify.sdk.android.player.SpotifyPlayer;
 import com.squareup.picasso.Picasso;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 import aviee.develop.music.ultimatespotifyplayer.adapter.SongBaseAdapter;
@@ -405,68 +412,70 @@ public class MainActivity extends Activity implements
 
                     @Override
                     public void onError(Throwable throwable) {
-                        Log.e("MainActivity", "Could not initialize player: " + throwable.getMessage());
+                        Log.e(TAG, "Could not initialize player: " + throwable.getMessage());
+                        Toast.makeText(getApplicationContext(), "Unable to authorize user currently. Please try again later.", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         }
     }
 
-    /*@Override
-    protected void onResume() {
-        super.onResume();
-        Log.i(TAG, "onResume");
-        stayWithinApplication = false;
-        if (mPlayer != null) {
-            mPlayer.resume(new Player.OperationCallback() {
-                @Override
-                public void onSuccess() {
-
-                }
-
-                @Override
-                public void onError(Error error) {
-
-                }
-            });
-        }
-
-        if (shuffle) {
-            shuffleButton.setText(getString(R.string.NoShuffle));
-        } else {
-            shuffleButton.setText(getString(R.string.Shuffle));
-        }
+   /* private static void sendEmail(Context context, File file) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"sharma.avitansh@gmail.com"});
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Log Report");
+        intent.putExtra(Intent.EXTRA_TEXT, "Add description:");
+        Uri uri = Uri.parse("file://" + file);
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
+        context.startActivity(Intent.createChooser(intent, "Send email..."));
     }
+    public static void sendLog(Context context) {
+        //set a file
+        Date datum = new Date();
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.i(TAG, "onPause");
-        if (!stayWithinApplication) {
-            if (mPlayer != null) {
-                mPlayer.pause(new Player.OperationCallback() {
-                    @Override
-                    public void onSuccess() {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        String fullName = df.format(datum) + "appLog.txt";
+        File file = new File(Environment.getExternalStorageDirectory(), fullName);
 
-                    }
+        //clears a previous log
+        if (file.exists()) {
+            file.delete();
+        }
+        //write log to file
+        int pid = android.os.Process.myPid();
+        try {
+            String command = String.format("logcat -d -v threadtime *:*");
+            Process process = Runtime.getRuntime().exec(command);
 
-                    @Override
-                    public void onError(Error error) {
-
-                    }
-                });
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder result = new StringBuilder();
+            String currentLine = null;
+            while ((currentLine = reader.readLine()) != null) {
+                if (currentLine != null && currentLine.contains(String.valueOf(pid))) {
+                    result.append(currentLine);
+                    result.append("\n");
+                }
             }
-        }
-    }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.i(TAG, "onStop");
-        HttpResponseCache cache = HttpResponseCache.getInstalled();
-        if (cache != null) {
-            cache.flush();
+            FileWriter out = new FileWriter(file);
+            out.write(result.toString());
+            out.close();
+            sendEmail(context, file);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+
+        //clear the log
+
+        try {
+            Runtime.getRuntime().exec("logcat -c");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
     }*/
 
     @Override
