@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="aviee.develop.music.ultimatespotifyplayer">
+    package="aviee.develop.music.myultimatesongexperienceforspotify">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -10,9 +10,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -28,13 +28,6 @@
         </activity>
 
         <receiver android:name=".notification.NotificationBroadcast">
-            <intent-filter>
-                <action android:name="com.example.avi.ultimatespotifyplayer.notification.previous" />
-                <action android:name="com.example.avi.ultimatespotifyplayer.notification.delete" />
-                <action android:name="com.example.avi.ultimatespotifyplayer.notification.pause" />
-                <action android:name="com.example.avi.ultimatespotifyplayer.notification.next" />
-                <action android:name="com.example.avi.ultimatespotifyplayer.notification.play" />
-            </intent-filter>
         </receiver>
 
         <activity

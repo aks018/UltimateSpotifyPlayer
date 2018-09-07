@@ -3,11 +3,11 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 27
     defaultConfig {
-        applicationId "aviee.develop.music.ultimatespotifyplayer"
+        applicationId "aviee.develop.music.myultimatesongexperienceforspotify"
         minSdkVersion 17
         targetSdkVersion 27
-        versionCode 8
-        versionName "1.7"
+        versionCode 2
+        versionName "1.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
