@@ -95,4 +95,20 @@ public class Song implements Serializable {
     public void setAlbumID(String albumID) {
         this.albumID = albumID;
     }
+
+    @Override
+    public String toString() {
+        return "Song{" +
+                "artist='" + artist + '\'' +
+                ", trackName='" + trackName + '\'' +
+                ", trackValue='" + trackValue + '\'' +
+                ", album='" + album + '\'' +
+                ", releaseDate='" + releaseDate + '\'' +
+                ", albumImage='" + albumImage + '\'' +
+                ", getTotalArtistTracks='" + getTotalArtistTracks + '\'' +
+                ", artistUri=" + artistUri +
+                ", songLength='" + songLength + '\'' +
+                ", albumID='" + albumID + '\'' +
+                '}';
+    }
 }

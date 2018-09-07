@@ -192,11 +192,7 @@ public class MainActivity extends Activity implements
         setContentView(R.layout.activity_main);
 
         shuffle = false;
-
-        enableHttpCaching();
         relativeLayoutSearchView = (RelativeLayout) findViewById(R.id.relativeLayoutSearchView);
-
-
         toolbar = (Toolbar) findViewById(R.id.toolbar4);
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         shuffleButton = (Button) findViewById(R.id.shuffleButton);
@@ -249,36 +245,16 @@ public class MainActivity extends Activity implements
         });
         requestRecordAudioPermission();
         setUpSpeech();
-
         stayWithinApplication = false;
 
-        if (!authenticate) {
-            AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-            builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
-            AuthenticationRequest request = builder.build();
-            AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
-
-        }
+        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
+        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
+        AuthenticationRequest request = builder.build();
+        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
 
         shuffleButton.setVisibility(View.INVISIBLE);
         fab.setVisibility(View.INVISIBLE);
-
-
         setUpListView();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mSession = new MediaSession(this, "MusicService");
-            mSession.setCallback(new MediaSession.Callback() {
-                @Override
-                public void onCommand(@NonNull String command, @Nullable Bundle args, @Nullable ResultReceiver cb) {
-                    super.onCommand(command, args, cb);
-                }
-            });
-            mSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
-
-
-        }
-
 
     }
 
@@ -712,8 +688,6 @@ public class MainActivity extends Activity implements
                     InputStream responseBody = connection.getInputStream();
                     InputStreamReader responseBodyReader =
                             new InputStreamReader(responseBody, "UTF-8");
-
-
                     //Create object mapper object and map JSON that is retrieved into an Arraylist of POJO we created called Music_Results
                     ObjectMapper objectMapper = new ObjectMapper();
                     //If property is unknown, mark it as ok so application does not crash
@@ -746,31 +720,32 @@ public class MainActivity extends Activity implements
 
 
                         songList.add(song);
+                        Log.i(TAG, song.toString());
                     }
-
                     return userLibrary.getNext();
-
                 } else {
                     return result;
                 }
             } catch (IOException e) {
-                Log.e("MainActivity", e.toString());
+                Log.e(TAG, e.toString());
+                Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
+                return result;
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+                Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
+                return result;
             }
-
-
-            return result;
         }
 
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            if (result == null || result.equals("null")) {
+            if (result == null || result.equals("null") || result.equals("NO CONNECTION MADE")) {
                 fab.setVisibility(View.VISIBLE);
                 shuffleButton.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.INVISIBLE);
                 songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
                 listView.setAdapter(songBaseAdapter);
-
                 showRateDialog();
             } else {
                 try {
@@ -781,11 +756,24 @@ public class MainActivity extends Activity implements
                     //Perform the doInBackground method, passing in our url
                     getRequest.execute(myUrl).get();
                 } catch (InterruptedException e) {
-                    Log.e("MainActivity", e.toString());
+                    Log.e(TAG, e.toString());
+                    Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
+                    showScreen();
                 } catch (ExecutionException e) {
-                    Log.e("MainActivity", e.toString());
+                    Log.e(TAG, e.toString());
+                    Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
+                    showScreen();
                 }
             }
+        }
+
+        private void showScreen() {
+            fab.setVisibility(View.VISIBLE);
+            shuffleButton.setVisibility(View.VISIBLE);
+            progressBar.setVisibility(View.INVISIBLE);
+            songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
+            listView.setAdapter(songBaseAdapter);
+            showRateDialog();
         }
     }
 
@@ -896,6 +884,7 @@ public class MainActivity extends Activity implements
                                 shuffleButton.setText(getString(R.string.NoShuffle));
                                 selectRandomSong();
                             }
+                            break;
                         default:
                             for (int i = 0; i < songList.size(); i++) {
                                 songName = matches.get(0).toString();
@@ -919,6 +908,11 @@ public class MainActivity extends Activity implements
                             shuffleButton.setText(getString(R.string.NoShuffle));
                             selectRandomSong();
                             break;
+                        case "randomize":
+                            shuffle = true;
+                            shuffleButton.setText(getString(R.string.NoShuffle));
+                            selectRandomSong();
+                            break;
                         case "pause":
                             mPlayer.pause(new Player.OperationCallback() {
                                 @Override
@@ -933,6 +927,23 @@ public class MainActivity extends Activity implements
                             });
                             break;
                         case "play":
+                            shuffle = true;
+                            selectRandomSong();
+                            break;
+                        case "begin":
+                            mPlayer.resume(new Player.OperationCallback() {
+                                @Override
+                                public void onSuccess() {
+
+                                }
+
+                                @Override
+                                public void onError(Error error) {
+
+                                }
+                            });
+                            break;
+                        case "new":
                             shuffle = true;
                             selectRandomSong();
                             break;
