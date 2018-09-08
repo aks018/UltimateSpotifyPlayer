@@ -2,17 +2,9 @@ package aviee.develop.music.myultimatesongexperienceforspotify;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Notification;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.media.AudioManager;
 import android.media.session.MediaSession;
-import android.media.session.PlaybackState;
-import android.net.Uri;
 import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -91,7 +83,7 @@ public class MainActivity extends Activity implements
 
     private String TAG = "MainActivity";
     // TODO: Replace with your client ID
-    public static final String CLIENT_ID = "194a6543e06246dba32f77c9b9214da5";
+    public static final String CLIENT_ID = "303a946e67b34fbd844052b6ad997636";
 
     // TODO: Replace with your redirect URI
     public static final String REDIRECT_URI = "https://google.com";
@@ -408,6 +400,8 @@ public class MainActivity extends Activity implements
                         mPlayer.addNotificationCallback(MainActivity.this);
                         token = response.getAccessToken();
                         authenticate = true;
+
+                        Toast.makeText(getApplicationContext(), "Able to identify user!", Toast.LENGTH_LONG).show();
                     }
 
                     @Override
@@ -419,64 +413,6 @@ public class MainActivity extends Activity implements
             }
         }
     }
-
-   /* private static void sendEmail(Context context, File file) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"sharma.avitansh@gmail.com"});
-        intent.putExtra(Intent.EXTRA_SUBJECT, "Log Report");
-        intent.putExtra(Intent.EXTRA_TEXT, "Add description:");
-        Uri uri = Uri.parse("file://" + file);
-        intent.putExtra(Intent.EXTRA_STREAM, uri);
-        context.startActivity(Intent.createChooser(intent, "Send email..."));
-    }
-    public static void sendLog(Context context) {
-        //set a file
-        Date datum = new Date();
-
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-        String fullName = df.format(datum) + "appLog.txt";
-        File file = new File(Environment.getExternalStorageDirectory(), fullName);
-
-        //clears a previous log
-        if (file.exists()) {
-            file.delete();
-        }
-        //write log to file
-        int pid = android.os.Process.myPid();
-        try {
-            String command = String.format("logcat -d -v threadtime *:*");
-            Process process = Runtime.getRuntime().exec(command);
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            StringBuilder result = new StringBuilder();
-            String currentLine = null;
-            while ((currentLine = reader.readLine()) != null) {
-                if (currentLine != null && currentLine.contains(String.valueOf(pid))) {
-                    result.append(currentLine);
-                    result.append("\n");
-                }
-            }
-
-            FileWriter out = new FileWriter(file);
-            out.write(result.toString());
-            out.close();
-            sendEmail(context, file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-        //clear the log
-
-        try {
-            Runtime.getRuntime().exec("logcat -c");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-    }*/
 
     @Override
     protected void onDestroy() {
@@ -575,6 +511,8 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onPlaybackError(Error error) {
+        Toast.makeText(getApplicationContext(), "Playback Error", Toast.LENGTH_SHORT).show();
+
         Log.d(TAG, "Playback error received: " + error.name());
         switch (error) {
             // Handle error type as necessary
@@ -609,6 +547,8 @@ public class MainActivity extends Activity implements
     @Override
     public void onLoggedOut() {
         Log.d(TAG, "User logged out");
+        Toast.makeText(getApplicationContext(), "Logged Out", Toast.LENGTH_LONG).show();
+
     }
 
     @Override
@@ -642,6 +582,7 @@ public class MainActivity extends Activity implements
     @Override
     public void onConnectionMessage(String message) {
         Log.d(TAG, "Received connection message: " + message);
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     public void goToSettings(View view) {
@@ -659,7 +600,6 @@ public class MainActivity extends Activity implements
         protected void onPreExecute() {
             super.onPreExecute();
             progressBar.setVisibility(View.VISIBLE);
-
         }
 
         @Override
@@ -669,6 +609,7 @@ public class MainActivity extends Activity implements
 
 
             try {
+                Toast.makeText(getApplicationContext(), "Attempting to get User Library.", Toast.LENGTH_LONG).show();
                 //Create a URL object holding our url
                 URL myUrl = new URL(stringUrl);
                 //Create a connection
@@ -727,10 +668,12 @@ public class MainActivity extends Activity implements
 
 
                         songList.add(song);
+                        progressBar.setVisibility(View.INVISIBLE);
                         Log.i(TAG, song.toString());
                     }
                     return userLibrary.getNext();
                 } else {
+                    Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
                     return result;
                 }
             } catch (IOException e) {
@@ -756,6 +699,8 @@ public class MainActivity extends Activity implements
                 showRateDialog();
             } else {
                 try {
+                    songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
+                    listView.setAdapter(songBaseAdapter);
                     //Some url endpoint that you may have
                     String myUrl = result;
                     //Instantiate new instance of our class

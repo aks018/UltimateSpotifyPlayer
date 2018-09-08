@@ -16,6 +16,8 @@ import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayer.Provider;
 import com.google.android.youtube.player.YouTubePlayerView;
+import com.spotify.sdk.android.player.Error;
+import com.spotify.sdk.android.player.Player;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,6 +52,18 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
 
         Bundle extras = getIntent().getExtras();
         String query = (String) extras.get("query");
+
+        MainActivity.mPlayer.pause(new Player.OperationCallback() {
+            @Override
+            public void onSuccess() {
+
+            }
+
+            @Override
+            public void onError(Error error) {
+
+            }
+        });
 
         try {
             //Some url endpoint that you may have
