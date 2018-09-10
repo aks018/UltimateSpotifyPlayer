@@ -44,6 +44,7 @@ import com.kobakei.ratethisapp.RateThisApp;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
+import com.spotify.sdk.android.authentication.SpotifyNativeAuthUtil;
 import com.spotify.sdk.android.player.Config;
 import com.spotify.sdk.android.player.ConnectionStateCallback;
 import com.spotify.sdk.android.player.Error;
@@ -84,6 +85,8 @@ public class MainActivity extends Activity implements
     private String TAG = "MainActivity";
     // TODO: Replace with your client ID
     public static final String CLIENT_ID = "303a946e67b34fbd844052b6ad997636";
+
+    public static final String CLIENT_SECRET = "e91ca75bb53243a3ae142f7f7086ac0c";
 
     // TODO: Replace with your redirect URI
     public static final String REDIRECT_URI = "https://google.com";
@@ -190,6 +193,8 @@ public class MainActivity extends Activity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Toast.makeText(getApplicationContext(), "Welcome!", Toast.LENGTH_LONG).show();
+
         shuffle = false;
         relativeLayoutSearchView = (RelativeLayout) findViewById(R.id.relativeLayoutSearchView);
         toolbar = (Toolbar) findViewById(R.id.toolbar4);
@@ -246,11 +251,11 @@ public class MainActivity extends Activity implements
         setUpSpeech();
         stayWithinApplication = false;
 
+
         AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
+        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read", "user-modify-playback-state", "user-read-playback-state"});
         AuthenticationRequest request = builder.build();
         AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
-
         shuffleButton.setVisibility(View.INVISIBLE);
         fab.setVisibility(View.INVISIBLE);
         setUpListView();
@@ -388,8 +393,10 @@ public class MainActivity extends Activity implements
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
+        Toast.makeText(getApplicationContext(), "Obtaining User Information...", Toast.LENGTH_LONG).show();
         if (requestCode == REQUEST_CODE) {
             final AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
+
             if (response.getType() == AuthenticationResponse.Type.TOKEN) {
                 Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
                 Spotify.getPlayer(playerConfig, this, new SpotifyPlayer.InitializationObserver() {
@@ -400,8 +407,6 @@ public class MainActivity extends Activity implements
                         mPlayer.addNotificationCallback(MainActivity.this);
                         token = response.getAccessToken();
                         authenticate = true;
-
-                        Toast.makeText(getApplicationContext(), "Able to identify user!", Toast.LENGTH_LONG).show();
                     }
 
                     @Override
@@ -410,6 +415,9 @@ public class MainActivity extends Activity implements
                         Toast.makeText(getApplicationContext(), "Unable to authorize user currently. Please try again later.", Toast.LENGTH_SHORT).show();
                     }
                 });
+            } else {
+                Toast.makeText(getApplicationContext(), "Not Able to Identify User!", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), Integer.toString(resultCode), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -554,7 +562,8 @@ public class MainActivity extends Activity implements
     @Override
     public void onLoginFailed(Error var1) {
         Log.d(TAG, "Login failed");
-        Toast.makeText(getApplicationContext(), "Unable to connect to account.", Toast.LENGTH_LONG).show();
+
+        Toast.makeText(getApplicationContext(), var1.toString(), Toast.LENGTH_LONG).show();
         Toast.makeText(getApplicationContext(), "If account is not premium, please upgrade account to use application.", Toast.LENGTH_LONG).show();
 
         AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
@@ -609,7 +618,6 @@ public class MainActivity extends Activity implements
 
 
             try {
-                Toast.makeText(getApplicationContext(), "Attempting to get User Library.", Toast.LENGTH_LONG).show();
                 //Create a URL object holding our url
                 URL myUrl = new URL(stringUrl);
                 //Create a connection
@@ -673,16 +681,13 @@ public class MainActivity extends Activity implements
                     }
                     return userLibrary.getNext();
                 } else {
-                    Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
                     return result;
                 }
             } catch (IOException e) {
                 Log.e(TAG, e.toString());
-                Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
                 return result;
             } catch (Exception e) {
                 Log.e(TAG, e.toString());
-                Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
                 return result;
             }
         }
@@ -699,8 +704,6 @@ public class MainActivity extends Activity implements
                 showRateDialog();
             } else {
                 try {
-                    songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
-                    listView.setAdapter(songBaseAdapter);
                     //Some url endpoint that you may have
                     String myUrl = result;
                     //Instantiate new instance of our class
