@@ -6,8 +6,8 @@ android {
         applicationId "aviee.develop.music.myultimatesongexperienceforspotify"
         minSdkVersion 17
         targetSdkVersion 27
-        versionCode 6
-        versionName "2.3"
+        versionCode 15
+        versionName "2.11"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled true

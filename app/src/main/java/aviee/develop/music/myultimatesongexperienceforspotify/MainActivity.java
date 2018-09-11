@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.session.MediaSession;
+import android.net.Uri;
 import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -89,7 +90,7 @@ public class MainActivity extends Activity implements
     public static final String CLIENT_SECRET = "e91ca75bb53243a3ae142f7f7086ac0c";
 
     // TODO: Replace with your redirect URI
-    public static final String REDIRECT_URI = "https://google.com";
+    public static final String REDIRECT_URI = "festevo://callback";
 
     public static Player mPlayer;
 
@@ -193,8 +194,6 @@ public class MainActivity extends Activity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toast.makeText(getApplicationContext(), "Welcome!", Toast.LENGTH_LONG).show();
-
         shuffle = false;
         relativeLayoutSearchView = (RelativeLayout) findViewById(R.id.relativeLayoutSearchView);
         toolbar = (Toolbar) findViewById(R.id.toolbar4);
@@ -252,10 +251,17 @@ public class MainActivity extends Activity implements
         stayWithinApplication = false;
 
 
-        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
+       /*AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
         builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read", "user-modify-playback-state", "user-read-playback-state"});
         AuthenticationRequest request = builder.build();
-        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);*/
+
+        final AuthenticationRequest request = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI)
+                .setScopes(new String[]{"user-read-private", "streaming", "user-library-read", "user-modify-playback-state", "user-read-playback-state"})
+                .build();
+
+        AuthenticationClient.openLoginInBrowser(this, request);
+
         shuffleButton.setVisibility(View.INVISIBLE);
         fab.setVisibility(View.INVISIBLE);
         setUpListView();
@@ -267,10 +273,11 @@ public class MainActivity extends Activity implements
         toolbar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (selectedPosition >= 0) {
-                    stayWithinApplication = true;
+                if (currentSongPlaying != null && songList.contains(currentSongPlaying)) {
                     Intent intent = new Intent(MainActivity.this, DisplaySong.class);
                     startActivity(intent);
+                } else {
+                    Toast.makeText(getApplicationContext(), "Can only view Music Player for songs in library currently.", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -393,10 +400,8 @@ public class MainActivity extends Activity implements
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        Toast.makeText(getApplicationContext(), "Obtaining User Information...", Toast.LENGTH_LONG).show();
         if (requestCode == REQUEST_CODE) {
             final AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
-
             if (response.getType() == AuthenticationResponse.Type.TOKEN) {
                 Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
                 Spotify.getPlayer(playerConfig, this, new SpotifyPlayer.InitializationObserver() {
@@ -418,6 +423,46 @@ public class MainActivity extends Activity implements
             } else {
                 Toast.makeText(getApplicationContext(), "Not Able to Identify User!", Toast.LENGTH_LONG).show();
                 Toast.makeText(getApplicationContext(), Integer.toString(resultCode), Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Uri uri = intent.getData();
+        if (uri != null) {
+            final AuthenticationResponse response = AuthenticationResponse.fromUri(uri);
+            switch (response.getType()) {
+                // Response was successful and contains auth token
+                case TOKEN:
+                    Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
+                    Spotify.getPlayer(playerConfig, this, new SpotifyPlayer.InitializationObserver() {
+                        @Override
+                        public void onInitialized(SpotifyPlayer spotifyPlayer) {
+                            mPlayer = spotifyPlayer;
+                            mPlayer.addConnectionStateCallback(MainActivity.this);
+                            mPlayer.addNotificationCallback(MainActivity.this);
+                            token = response.getAccessToken();
+                            authenticate = true;
+                        }
+
+                        @Override
+                        public void onError(Throwable throwable) {
+                            Log.e(TAG, "Could not initialize player: " + throwable.getMessage());
+                            Toast.makeText(getApplicationContext(), "Unable to authorize user currently. Please try again later.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    break;
+                // Auth flow returned an error
+                case ERROR:
+                    // Handle error response
+                    break;
+
+                // Most likely auth flow was cancelled
+                default:
+                    break;
+                // Handle other cases
             }
         }
     }
@@ -519,8 +564,6 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onPlaybackError(Error error) {
-        Toast.makeText(getApplicationContext(), "Playback Error", Toast.LENGTH_SHORT).show();
-
         Log.d(TAG, "Playback error received: " + error.name());
         switch (error) {
             // Handle error type as necessary
@@ -532,7 +575,6 @@ public class MainActivity extends Activity implements
     @Override
     public void onLoggedIn() {
         Log.d(TAG, "User logged in");
-        Toast.makeText(getApplicationContext(), "Successfully Logged In.", Toast.LENGTH_LONG).show();
         try {
             String myUrl = "https://api.spotify.com/v1/me/tracks";
             //String to place our result in
@@ -566,10 +608,6 @@ public class MainActivity extends Activity implements
         Toast.makeText(getApplicationContext(), var1.toString(), Toast.LENGTH_LONG).show();
         Toast.makeText(getApplicationContext(), "If account is not premium, please upgrade account to use application.", Toast.LENGTH_LONG).show();
 
-        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
-        AuthenticationRequest request = builder.build();
-        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
 
     }
 
@@ -591,7 +629,6 @@ public class MainActivity extends Activity implements
     @Override
     public void onConnectionMessage(String message) {
         Log.d(TAG, "Received connection message: " + message);
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     public void goToSettings(View view) {

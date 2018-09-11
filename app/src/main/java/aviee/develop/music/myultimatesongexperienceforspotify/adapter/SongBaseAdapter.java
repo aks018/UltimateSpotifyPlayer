@@ -175,6 +175,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
                                 } catch (ExecutionException e) {
                                     e.printStackTrace();
                                 }
+                                break;
                             case R.id.viewLyrics:
                                 AlertDialog.Builder alert = new AlertDialog.Builder(context);
                                 wv = new WebView(context);
@@ -327,6 +328,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
                 Picasso.with(context).load(song.getAlbumImage()).into(MainActivity.mSelectedTrackImage);
                 MainActivity.mPlayer.refreshCache();
                 MainActivity.mPlayer.playUri(null, song.getTrackValue(), 0, 0);
+                MainActivity.currentSongPlaying = song;
                 return;
             }
             Random random = new Random();
