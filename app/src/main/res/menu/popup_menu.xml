@@ -7,8 +7,5 @@
     <item
         android:id="@+id/randomSong"
         android:title="Random Song by Artist Name" />
-    <item
-        android:id="@+id/viewLyrics"
-        android:title="Lyrics" />
 
 </menu>

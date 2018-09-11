@@ -113,7 +113,7 @@
         android:layout_margin="1.5dp"
         android:background="@drawable/list_selector" />
 
-    <aviee.develop.music.myultimatesongexperienceforspotify.config.MoveableFloatingActionButton
+    <aviee.develop.music.myultimatemusicexperienceforspotify.config.MoveableFloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

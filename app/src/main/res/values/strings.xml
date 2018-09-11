@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Ultimate Song Experience for Spotify</string>
+    <string name="app_name">My Ultimate Music Experience for Spotify</string>
     <string name="player_error">Error initializing YouTube player: %s</string>
     <string name="seek_to">Jump To</string>
     <string name="seek_to_hint">Seconds</string>
