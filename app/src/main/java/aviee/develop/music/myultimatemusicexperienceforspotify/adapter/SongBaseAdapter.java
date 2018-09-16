@@ -109,6 +109,7 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
         TextView trackName;
         TextView artistName;
         TextView albumName;
+        TextView tilda;
         ImageView dropDown;
     }
 
@@ -124,8 +125,9 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
         holder.artistName = (TextView) rowView.findViewById(aviee.develop.music.myultimatemusicexperienceforspotify.R.id.textViewArtistName);
         holder.albumName = (TextView) rowView.findViewById(aviee.develop.music.myultimatemusicexperienceforspotify.R.id.textViewAlbumName);
         holder.dropDown = (ImageView) rowView.findViewById(aviee.develop.music.myultimatemusicexperienceforspotify.R.id.viewMusicVideo);
+        holder.tilda = (TextView) rowView.findViewById(R.id.textView2);
 
-        //Store the music object from the position within the arraylist
+        //Store the music object from the position within the ArrayList
         final Song songObject = mData.get(position);
 
         holder.trackName.setText(songObject.getTrackName());
@@ -135,7 +137,10 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
 
         if (MainActivity.selectedPosition == position && MainActivity.currentSongPlaying != null &&
                 MainActivity.currentSongPlaying == songObject) {
-            rowView.setBackgroundColor(Color.parseColor("#90EE90"));
+            holder.trackName.setTextColor(Color.parseColor("#90EE90"));
+            holder.albumName.setTextColor(Color.parseColor("#90EE90"));
+            holder.artistName.setTextColor(Color.parseColor("#90EE90"));
+            holder.tilda.setTextColor(Color.parseColor("#90EE90"));
             holder.trackName.setTypeface(null, Typeface.BOLD_ITALIC);
         }
 
@@ -176,7 +181,9 @@ public class SongBaseAdapter extends BaseAdapter implements Filterable, Serializ
                                     e.printStackTrace();
                                 }
                                 break;
-
+                            case R.id.action_alarms:
+                                Toast.makeText(context, "Alarms are coming soon.", Toast.LENGTH_LONG).show();
+                                break;
                             default:
                                 break;
                         }

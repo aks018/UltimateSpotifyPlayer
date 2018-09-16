@@ -8,4 +8,8 @@
         android:id="@+id/randomSong"
         android:title="Random Song by Artist Name" />
 
+    <item
+        android:id="@+id/alarm"
+        android:title="Set Alarm" />
+
 </menu>

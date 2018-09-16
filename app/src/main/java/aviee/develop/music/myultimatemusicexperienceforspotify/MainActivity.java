@@ -17,6 +17,7 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.SearchView;
@@ -174,7 +175,6 @@ public class MainActivity extends Activity implements
         else
             mPlayerControl.setImageResource(R.drawable.baseline_play_arrow_24);
 
-        progressBar.setVisibility(View.INVISIBLE);
         songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
         listView.setAdapter(songBaseAdapter);
 
@@ -250,7 +250,6 @@ public class MainActivity extends Activity implements
         setUpSpeech();
         stayWithinApplication = false;
 
-
        /*AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
         builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read", "user-modify-playback-state", "user-read-playback-state"});
         AuthenticationRequest request = builder.build();
@@ -266,6 +265,29 @@ public class MainActivity extends Activity implements
         fab.setVisibility(View.INVISIBLE);
         setUpListView();
 
+        BottomNavigationView bottomNavigationView = (BottomNavigationView)
+                findViewById(R.id.bottom_navigation);
+
+        bottomNavigationView.setOnNavigationItemSelectedListener(
+                new BottomNavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.action_library:
+                                break;
+
+                            case R.id.action_alarms:
+                                
+
+                                break;
+                        }
+                        return true;
+                    }
+                });
+
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+
+
     }
 
     private void toolbarOnClick() {
@@ -274,6 +296,7 @@ public class MainActivity extends Activity implements
             @Override
             public void onClick(View v) {
                 if (currentSongPlaying != null && songList.contains(currentSongPlaying)) {
+                    stayWithinApplication = true;
                     Intent intent = new Intent(MainActivity.this, DisplaySong.class);
                     startActivity(intent);
                 } else {
@@ -417,12 +440,10 @@ public class MainActivity extends Activity implements
                     @Override
                     public void onError(Throwable throwable) {
                         Log.e(TAG, "Could not initialize player: " + throwable.getMessage());
-                        Toast.makeText(getApplicationContext(), "Unable to authorize user currently. Please try again later.", Toast.LENGTH_SHORT).show();
                     }
                 });
             } else {
-                Toast.makeText(getApplicationContext(), "Not Able to Identify User!", Toast.LENGTH_LONG).show();
-                Toast.makeText(getApplicationContext(), Integer.toString(resultCode), Toast.LENGTH_LONG).show();
+                Log.i(TAG, "Not able to identify user");
             }
         }
     }
@@ -450,7 +471,6 @@ public class MainActivity extends Activity implements
                         @Override
                         public void onError(Throwable throwable) {
                             Log.e(TAG, "Could not initialize player: " + throwable.getMessage());
-                            Toast.makeText(getApplicationContext(), "Unable to authorize user currently. Please try again later.", Toast.LENGTH_SHORT).show();
                         }
                     });
                     break;
@@ -585,10 +605,8 @@ public class MainActivity extends Activity implements
             result = getRequest.execute(myUrl).get();
         } catch (InterruptedException e) {
             Log.e(TAG, e.toString());
-            Toast.makeText(getApplicationContext(), "Error in retrieving library", Toast.LENGTH_LONG).show();
         } catch (ExecutionException e) {
             Log.e(TAG, e.toString());
-            Toast.makeText(getApplicationContext(), "Error in retrieving library", Toast.LENGTH_LONG).show();
         }
 
     }
@@ -597,32 +615,17 @@ public class MainActivity extends Activity implements
     @Override
     public void onLoggedOut() {
         Log.d(TAG, "User logged out");
-        Toast.makeText(getApplicationContext(), "Logged Out", Toast.LENGTH_LONG).show();
-
     }
 
     @Override
     public void onLoginFailed(Error var1) {
         Log.d(TAG, "Login failed");
-
-        Toast.makeText(getApplicationContext(), var1.toString(), Toast.LENGTH_LONG).show();
-        Toast.makeText(getApplicationContext(), "If account is not premium, please upgrade account to use application.", Toast.LENGTH_LONG).show();
-
-
     }
 
     @Override
     public void onTemporaryError() {
 
         Log.d(TAG, "Temporary error occurred");
-        Toast.makeText(getApplicationContext(), "Unable to connect to account. Please try again.", Toast.LENGTH_SHORT).show();
-
-
-        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read"});
-        AuthenticationRequest request = builder.build();
-        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
-
 
     }
 
@@ -713,7 +716,6 @@ public class MainActivity extends Activity implements
 
 
                         songList.add(song);
-                        progressBar.setVisibility(View.INVISIBLE);
                         Log.i(TAG, song.toString());
                     }
                     return userLibrary.getNext();
@@ -749,11 +751,9 @@ public class MainActivity extends Activity implements
                     getRequest.execute(myUrl).get();
                 } catch (InterruptedException e) {
                     Log.e(TAG, e.toString());
-                    Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
                     showScreen();
                 } catch (ExecutionException e) {
                     Log.e(TAG, e.toString());
-                    Toast.makeText(getApplicationContext(), "Unable to get User Library.", Toast.LENGTH_LONG).show();
                     showScreen();
                 }
             }

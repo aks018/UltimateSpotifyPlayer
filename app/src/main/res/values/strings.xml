@@ -17,5 +17,8 @@
     <string name="Shuffle">Shuffle</string>
     <string name="Find">Find</string>
 
+    <string name="Library">Library</string>
+    <string name="Alarms">Alarms</string>
+
 
 </resources>
