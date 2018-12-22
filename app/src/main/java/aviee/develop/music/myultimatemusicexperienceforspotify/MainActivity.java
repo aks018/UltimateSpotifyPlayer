@@ -87,7 +87,6 @@ public class MainActivity extends Activity implements
     private String TAG = "MainActivity";
 
     public static final String CLIENT_ID = "303a946e67b34fbd844052b6ad997636";
-    public static final String CLIENT_SECRET = "e91ca75bb53243a3ae142f7f7086ac0c";
     public static final String REDIRECT_URI = "festevo://callback";
     public static Player mPlayer;
     public static final int REQUEST_CODE = 1337;
@@ -181,7 +180,7 @@ public class MainActivity extends Activity implements
         songList = new ArrayList<>();
         stayWithinApplication = false;
 
-        setUpSpotifyRequest();
+
         setUpUI();
         toolbarOnClick();
         setUpSearchView();
@@ -191,6 +190,7 @@ public class MainActivity extends Activity implements
         setUpListView();
         setUpBottomNavigationViewListener();
 
+        setUpSpotifyRequest();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
     }
 
@@ -258,6 +258,7 @@ public class MainActivity extends Activity implements
         shuffleButton.setVisibility(View.INVISIBLE);
 
         //On start make the fab invisible
+        fab = findViewById(R.id.fab);
         fab.setVisibility(View.INVISIBLE);
 
         bottomNavigationView = (BottomNavigationView)
