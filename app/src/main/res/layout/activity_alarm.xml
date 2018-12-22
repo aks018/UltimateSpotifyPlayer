@@ -7,6 +7,9 @@
     android:layout_height="match_parent"
     tools:context=".AlarmActivity">
 
-
+    <com.baoyz.swipemenulistview.SwipeMenuListView
+        android:id="@+id/alarmListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </RelativeLayout>

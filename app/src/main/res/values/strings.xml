@@ -19,6 +19,6 @@
 
     <string name="Library">Library</string>
     <string name="Alarms">Alarms</string>
-
+    <string name="NoConnection">NO CONNECTION MADE</string>
 
 </resources>

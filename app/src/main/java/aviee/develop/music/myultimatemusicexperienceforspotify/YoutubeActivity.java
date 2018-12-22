@@ -38,10 +38,9 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
 
     private MyPlayerStateChangeListener playerStateChangeListener;
     private MyPlaybackEventListener playbackEventListener;
-
     ProgressBar progressBar;
-
     String videoID = "";
+    String TAG = "YoutubeActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,9 +78,9 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
             //Perform the doInBackground method, passing in our url
             result = getRequest.execute(myUrl).get();
         } catch (InterruptedException e) {
-            Log.e("MainActivity", e.toString());
+            Log.e(TAG, e.toString());
         } catch (ExecutionException e) {
-            Log.e("MainActivity", e.toString());
+            Log.e(TAG, e.toString());
         }
     }
 
@@ -203,7 +202,7 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
         @Override
         protected String doInBackground(String... params) {
             String stringUrl = params[0];
-            String result = "NO CONNECTION MADE";
+            String result = getString(R.string.NoConnection);;
 
 
             try {
@@ -248,7 +247,7 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
                     return result;
                 }
             } catch (IOException e) {
-                Log.e("YoutubeResults", e.toString());
+                Log.e(TAG , e.toString());
             }
 
 
@@ -258,7 +257,7 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            if (result != null || result.equals("NO CONNECTION MADE")) {
+            if (result != null || result.equals(getString(R.string.NoConnection))) {
                 progressBar.setVisibility(View.INVISIBLE);
 
                 videoID = result;

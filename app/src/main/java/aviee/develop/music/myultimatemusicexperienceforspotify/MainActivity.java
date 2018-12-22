@@ -85,28 +85,18 @@ public class MainActivity extends Activity implements
         SpotifyPlayer.NotificationCallback, ConnectionStateCallback {
 
     private String TAG = "MainActivity";
-    // TODO: Replace with your client ID
+
     public static final String CLIENT_ID = "303a946e67b34fbd844052b6ad997636";
-
     public static final String CLIENT_SECRET = "e91ca75bb53243a3ae142f7f7086ac0c";
-
-    // TODO: Replace with your redirect URI
     public static final String REDIRECT_URI = "festevo://callback";
-
     public static Player mPlayer;
-
     public static final int REQUEST_CODE = 1337;
-
     public static String token = "";
 
     ArrayList<Song> songList;
-
     SongBaseAdapter songBaseAdapter;
-
     ListView listView;
-
     ProgressBar progressBar;
-
     public static TextView mSelectedTrackTitle;
     public static ImageView mSelectedTrackImage;
     public static ImageView mPlayerControl;
@@ -116,25 +106,17 @@ public class MainActivity extends Activity implements
     SearchView searchView;
     public static int selectedPosition = -100;
     public static Song currentSongPlaying;
-
     RelativeLayout relativeLayoutSearchView;
-
     public static boolean shuffle;
-
     public static Button shuffleButton;
-
     public static SpeechRecognizer mSpeechRecognizer;
     private Intent mSpeechRecognizerIntent;
     private boolean mIsListening;
     public static boolean authenticate;
     public static boolean stayWithinApplication;
-
     private View speechView;
-
     private boolean prevSelected;
-
-    MediaSession mSession;
-
+    BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -195,30 +177,101 @@ public class MainActivity extends Activity implements
         setContentView(R.layout.activity_main);
 
         shuffle = false;
+        pause = true;
+        songList = new ArrayList<>();
+        stayWithinApplication = false;
+
+        setUpSpotifyRequest();
+        setUpUI();
+        toolbarOnClick();
+        setUpSearchView();
+        requestRecordAudioPermission();
+        setUpSpeech();
+        setUpMPlayerListener();
+        setUpListView();
+        setUpBottomNavigationViewListener();
+
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+    }
+
+    /*
+    Params: None
+    Returns: Void
+    Functionality: Set up request and attempt user login to Spotify using token,
+                   client_id and redirect uri which should be provided
+     */
+    private void setUpSpotifyRequest(){
+        final AuthenticationRequest request = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI)
+                .setScopes(new String[]{"user-read-private", "streaming", "user-library-read", "user-modify-playback-state", "user-read-playback-state"})
+                .build();
+
+        AuthenticationClient.openLoginInBrowser(this, request);
+    }
+
+    /*
+    Params: None
+    Returns: Void
+    Functionality: Set up bottom bottomnavigationview listenter to handle whenever user clicks bottomnavigationview
+     */
+    private void setUpBottomNavigationViewListener(){
+        bottomNavigationView.setOnNavigationItemSelectedListener(
+                new BottomNavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.action_library:
+                                break;
+                            case R.id.action_alarms:
+                                break;
+                        }
+                        return true;
+                    }
+                });
+    }
+
+    /*
+   Params: None
+   Returns: Void
+   Functionality: Set up all the UI for the activity here.
+    */
+    private void setUpUI(){
         relativeLayoutSearchView = (RelativeLayout) findViewById(R.id.relativeLayoutSearchView);
         toolbar = (Toolbar) findViewById(R.id.toolbar4);
-        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+
+        //Set up shuffle button
         shuffleButton = (Button) findViewById(R.id.shuffleButton);
 
-        toolbarOnClick();
-
+        //Set up listview
         listView = (ListView) findViewById(R.id.songListView);
         listView.setScrollingCacheEnabled(false);
         listView.setSelector(R.drawable.list_selector);
 
-        setUpSearchView();
-
-
+        //Set up progress bar
         progressBar = (ProgressBar) findViewById(R.id.secondBar);
-        songList = new ArrayList<>();
+
+        //Set up player controller
         mSelectedTrackTitle = (TextView) findViewById(R.id.selected_track_title);
         mSelectedTrackImage = (ImageView) findViewById(R.id.selected_track_image);
         mPlayerControl = (ImageView) findViewById(R.id.player_control);
-        pause = true;
+
+        //On start make the shuffle button invisible
+        shuffleButton.setVisibility(View.INVISIBLE);
+
+        //On start make the fab invisible
+        fab.setVisibility(View.INVISIBLE);
+
+        bottomNavigationView = (BottomNavigationView)
+                findViewById(R.id.bottom_navigation);
+    }
+    /*
+       Params: None
+       Returns: Void
+       Functionality: Set up the music player listener here to handle user interaction with music player
+     */
+    private void setUpMPlayerListener(){
         mPlayerControl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "CLICKED!!!!");
                 if (pause) {
                     mPlayer.resume(new Player.OperationCallback() {
                         @Override
@@ -246,50 +299,13 @@ public class MainActivity extends Activity implements
                 }
             }
         });
-        requestRecordAudioPermission();
-        setUpSpeech();
-        stayWithinApplication = false;
-
-       /*AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-        builder.setScopes(new String[]{"user-read-private", "streaming", "user-library-read", "user-modify-playback-state", "user-read-playback-state"});
-        AuthenticationRequest request = builder.build();
-        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);*/
-
-        final AuthenticationRequest request = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI)
-                .setScopes(new String[]{"user-read-private", "streaming", "user-library-read", "user-modify-playback-state", "user-read-playback-state"})
-                .build();
-
-        AuthenticationClient.openLoginInBrowser(this, request);
-
-        shuffleButton.setVisibility(View.INVISIBLE);
-        fab.setVisibility(View.INVISIBLE);
-        setUpListView();
-
-        BottomNavigationView bottomNavigationView = (BottomNavigationView)
-                findViewById(R.id.bottom_navigation);
-
-        bottomNavigationView.setOnNavigationItemSelectedListener(
-                new BottomNavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.action_library:
-                                break;
-
-                            case R.id.action_alarms:
-                                
-
-                                break;
-                        }
-                        return true;
-                    }
-                });
-
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
-
-
     }
 
+    /*
+       Params: None
+       Returns: Void
+       Functionality: Handle user interaction with toolbar
+     */
     private void toolbarOnClick() {
 
         toolbar.setOnClickListener(new View.OnClickListener() {
@@ -306,6 +322,11 @@ public class MainActivity extends Activity implements
         });
     }
 
+    /*
+       Params: View
+       Returns: Void
+       Functionality: Toggle ability to shuffle songs
+     */
     public void shuffleSongs(View view) {
         if (shuffle) {
             shuffle = false;
@@ -317,6 +338,11 @@ public class MainActivity extends Activity implements
         }
     }
 
+    /*
+       Params: Void
+       Returns: Void
+       Functionality: Select a random song in library
+     */
     private void selectRandomSong() {
         int newPosition = Constants.randomWithRange(0, songList.size() - 1);
         Song song = (Song) listView.getAdapter().getItem(newPosition);
@@ -331,6 +357,11 @@ public class MainActivity extends Activity implements
         listView.smoothScrollToPosition(newPosition);
     }
 
+    /*
+       Params: Void
+       Returns: Void
+       Functionality: Set up listview of songs
+     */
     private void setUpListView() {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -350,14 +381,6 @@ public class MainActivity extends Activity implements
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
-                switch (scrollState) {
-                    /*case SCROLL_STATE_IDLE:
-                        relativeLayoutSearchView.setVisibility(View.VISIBLE);
-                        break;
-                    case SCROLL_STATE_TOUCH_SCROLL:
-                        relativeLayoutSearchView.setVisibility(View.GONE);
-                        break;*/
-                }
             }
 
             @Override
@@ -372,11 +395,15 @@ public class MainActivity extends Activity implements
         });
     }
 
+    /*
+       Params: Void
+       Returns: Void
+       Functionality: Handle user interaction with searchview
+     */
     private void setUpSearchView() {
         searchView = (SearchView) findViewById(R.id.searchView);
         searchView.setQueryHint(getString(R.string.Find));
         searchView.clearFocus();
-
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -397,16 +424,11 @@ public class MainActivity extends Activity implements
 
     }
 
-    private void enableHttpCaching() {
-        try {
-            File httpCacheDir = new File(getApplicationContext().getCacheDir(), "http");
-            long httpCacheSize = 10 * 1024 * 1024; // 10 MiB
-            HttpResponseCache.install(httpCacheDir, httpCacheSize);
-        } catch (IOException e) {
-            Log.i(TAG, "HTTP response cache installation failed:" + e);
-        }
-    }
-
+    /*
+       Params: Void
+       Returns: Void
+       Functionality: Request permission from user to use audio within the application
+     */
     private void requestRecordAudioPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             String requiredPermission = Manifest.permission.RECORD_AUDIO;
@@ -419,7 +441,11 @@ public class MainActivity extends Activity implements
         }
     }
 
-
+    /*
+       Params: requestCode, resultCode, intent
+       Returns: Void
+       Functionality: Upon Spotify authenticating user, handle callback to application and begin initializing Spotify player
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -639,7 +665,6 @@ public class MainActivity extends Activity implements
         startActivity(intent);
     }
 
-
     public class HttpGetRequest extends AsyncTask<String, Void, String> {
         public static final String REQUEST_METHOD = "GET";
         public static final int READ_TIMEOUT = 15000;
@@ -654,9 +679,7 @@ public class MainActivity extends Activity implements
         @Override
         protected String doInBackground(String... params) {
             String stringUrl = params[0];
-            String result = "NO CONNECTION MADE";
-
-
+            String result = getString(R.string.NoConnection);
             try {
                 //Create a URL object holding our url
                 URL myUrl = new URL(stringUrl);
@@ -734,7 +757,7 @@ public class MainActivity extends Activity implements
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            if (result == null || result.equals("null") || result.equals("NO CONNECTION MADE")) {
+            if (result == null || result.equals("null") || result.equals(getString(R.string.NoConnection))) {
                 fab.setVisibility(View.VISIBLE);
                 shuffleButton.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.INVISIBLE);
@@ -987,6 +1010,11 @@ public class MainActivity extends Activity implements
         }
     }
 
+    /*
+       Params: Song, Integer
+       Returns: Void
+       Functionality: Play song and set up UI to display song being played
+     */
     private void playGivenSong(Song song, int i) {
         currentSongPlaying = song;
         mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
