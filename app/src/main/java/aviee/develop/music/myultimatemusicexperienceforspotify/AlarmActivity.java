@@ -1,10 +1,14 @@
 package aviee.develop.music.myultimatemusicexperienceforspotify;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MenuItem;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
@@ -14,6 +18,8 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 public class AlarmActivity extends AppCompatActivity {
 
     SwipeMenuListView listView;
+    BottomNavigationView bottomNavigationView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,8 +29,29 @@ public class AlarmActivity extends AppCompatActivity {
         listView = findViewById(R.id.alarmListView);
 
         createMenu();
+        createBottomNavigationView();
     }
 
+    private void createBottomNavigationView(){
+
+        bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnNavigationItemSelectedListener(
+                new BottomNavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.action_library:
+                                Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                                startActivity(i);
+                            case R.id.action_alarms:
+                               break;
+                        }
+                        return true;
+                    }
+                });
+        //bottomNavigationView.setSelectedItemId(R.id.action_alarms);
+
+    }
 
     private void createMenu() {
         SwipeMenuCreator creator = new SwipeMenuCreator() {

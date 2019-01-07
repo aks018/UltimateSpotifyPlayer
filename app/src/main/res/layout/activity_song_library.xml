@@ -1,19 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:background="@color/Black"
     android:layout_height="match_parent"
-    tools:context=".AlarmActivity">
+    tools:context=".MainActivity">
 
-    <com.baoyz.swipemenulistview.SwipeMenuListView
-        android:id="@+id/alarmListView"
-        android:layout_width="match_parent"
-        android:layout_above="@+id/toolbar4"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true" />
+
+    <RelativeLayout
+        android:id="@+id/relativeLayoutSearchView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <android.support.v7.widget.SearchView
+            android:id="@+id/searchView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_margin="1.5dp"
+            android:background="@color/LightBlue"
+            android:clickable="true">
+
+        </android.support.v7.widget.SearchView>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id='@+id/relativeLayoutButton'
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/relativeLayoutSearchView">
+
+        <Button
+            android:id="@+id/shuffleButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="3.5dp"
+            android:background="@drawable/round_button"
+            android:onClick="shuffleSongs"
+            android:text="Shuffle" />
+
+
+    </RelativeLayout>
+
+    <ProgressBar
+        android:id="@+id/secondBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:tooltipText="Retrieving Library"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/songListView"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar4"
@@ -59,6 +104,24 @@
 
     </android.support.v7.widget.Toolbar>
 
+    <ListView
+        android:id="@+id/songListView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/toolbar4"
+        android:layout_below="@+id/relativeLayoutButton"
+        android:layout_margin="1.5dp"
+        android:background="@drawable/list_selector" />
+
+    <aviee.develop.music.myultimatemusicexperienceforspotify.config.MoveableFloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/toolbar4"
+        android:layout_alignParentEnd="true"
+        android:layout_gravity="end|bottom"
+        android:src="@drawable/baseline_mic_black_24"
+        app:backgroundTint="@color/LightGreen" />
 
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/bottom_navigation"
@@ -75,5 +138,6 @@
         app:itemIconTint="@drawable/selector"
         app:itemTextColor="@drawable/selector"
         app:menu="@menu/bottom_navigation_menu" />
+
 
 </RelativeLayout>

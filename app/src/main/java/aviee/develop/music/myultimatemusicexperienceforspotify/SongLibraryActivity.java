@@ -83,17 +83,10 @@ import aviee.develop.music.myultimatemusicexperienceforspotify.pojo.Track;
 import aviee.develop.music.myultimatemusicexperienceforspotify.pojo.UserLibrary;
 
 
-public class MainActivity extends Activity implements
-        SpotifyPlayer.NotificationCallback, ConnectionStateCallback {
+public class SongLibraryActivity extends Activity {
 
-    private String TAG = "MainActivity";
-
-    public static final String CLIENT_ID = "303a946e67b34fbd844052b6ad997636";
-    public static final String REDIRECT_URI = "festevo://callback";
+    private String TAG = "SongLibraryActivity";
     public static Player mPlayer;
-    public static final int REQUEST_CODE = 1337;
-    public static String token = "";
-
     ArrayList<Song> songList;
     SongBaseAdapter songBaseAdapter;
     ListView listView;
@@ -153,14 +146,14 @@ public class MainActivity extends Activity implements
         if (currentSongPlaying != null) {
             pause = true;
             mSelectedTrackTitle.setText(currentSongPlaying.getTrackName() + " ~ " + currentSongPlaying.getArtist());
-            Picasso.with(MainActivity.this).load(currentSongPlaying.getAlbumImage()).into(mSelectedTrackImage);
+            Picasso.with(SongLibraryActivity.this).load(currentSongPlaying.getAlbumImage()).into(mSelectedTrackImage);
         }
         if (currentSongPlaying == null)
             mPlayerControl.setImageResource(0);
         else
             mPlayerControl.setImageResource(R.drawable.baseline_play_arrow_24);
 
-        songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
+        songBaseAdapter = new SongBaseAdapter(SongLibraryActivity.this, songList);
         listView.setAdapter(songBaseAdapter);
 
         songBaseAdapter.notifyDataSetChanged();
@@ -185,6 +178,12 @@ public class MainActivity extends Activity implements
         stayWithinApplication = false;
         db = new DbHelper(this);
 
+        songList = db.getAllSongs();
+        mPlayer = MainActivity.mPlayer;
+
+
+
+
 
         setUpUI();
         toolbarOnClick();
@@ -195,23 +194,9 @@ public class MainActivity extends Activity implements
         setUpListView();
         setUpBottomNavigationViewListener();
 
-        setUpSpotifyRequest();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
     }
 
-    /*
-    Params: None
-    Returns: Void
-    Functionality: Set up request and attempt user login to Spotify using token,
-                   client_id and redirect uri which should be provided
-     */
-    private void setUpSpotifyRequest(){
-        final AuthenticationRequest request = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI)
-                .setScopes(new String[]{"user-read-private", "streaming", "user-library-read", "user-modify-playback-state", "user-read-playback-state"})
-                .build();
-
-        AuthenticationClient.openLoginInBrowser(this, request);
-    }
 
     /*
     Params: None
@@ -229,6 +214,7 @@ public class MainActivity extends Activity implements
                             case R.id.action_alarms:
                                 Intent i = new Intent(getApplicationContext(), AlarmActivity.class);
                                 startActivity(i);
+                                finish();
                         }
                         return true;
                     }
@@ -319,7 +305,7 @@ public class MainActivity extends Activity implements
             public void onClick(View v) {
                 if (currentSongPlaying != null && songList.contains(currentSongPlaying)) {
                     stayWithinApplication = true;
-                    Intent intent = new Intent(MainActivity.this, DisplaySong.class);
+                    Intent intent = new Intent(SongLibraryActivity.this, DisplaySong.class);
                     startActivity(intent);
                 } else {
                     Toast.makeText(getApplicationContext(), "Can only view Music Player for songs in library currently.", Toast.LENGTH_LONG).show();
@@ -354,7 +340,7 @@ public class MainActivity extends Activity implements
         Song song = (Song) listView.getAdapter().getItem(newPosition);
         currentSongPlaying = song;
         mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-        Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+        Picasso.with(SongLibraryActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
         currentSelected = newPosition;
         mPlayer.refreshCache();
         mPlayer.playUri(null, song.getTrackValue(), 0, 0);
@@ -369,14 +355,21 @@ public class MainActivity extends Activity implements
        Functionality: Set up listview of songs
      */
     private void setUpListView() {
+        fab.setVisibility(View.VISIBLE);
+        shuffleButton.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.INVISIBLE);
+        songBaseAdapter = new SongBaseAdapter(SongLibraryActivity.this, songList);
+        listView.setAdapter(songBaseAdapter);
+        showRateDialog();
+
+        db.printAllSongs();
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Song song = (Song) parent.getItemAtPosition(position);
                 currentSongPlaying = song;
                 mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-                Log.i(TAG, "Song Image: " + song.getAlbumImage());
-                Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+                Picasso.with(SongLibraryActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
                 currentSelected = position;
                 mPlayer.playUri(null, song.getTrackValue(), 0, 0);
                 selectedPosition = position;
@@ -448,76 +441,6 @@ public class MainActivity extends Activity implements
         }
     }
 
-    /*
-       Params: requestCode, resultCode, intent
-       Returns: Void
-       Functionality: Upon Spotify authenticating user, handle callback to application and begin initializing Spotify player
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
-        if (requestCode == REQUEST_CODE) {
-            final AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
-            if (response.getType() == AuthenticationResponse.Type.TOKEN) {
-                Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
-                Spotify.getPlayer(playerConfig, this, new SpotifyPlayer.InitializationObserver() {
-                    @Override
-                    public void onInitialized(SpotifyPlayer spotifyPlayer) {
-                        mPlayer = spotifyPlayer;
-                        mPlayer.addConnectionStateCallback(MainActivity.this);
-                        mPlayer.addNotificationCallback(MainActivity.this);
-                        token = response.getAccessToken();
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        Log.e(TAG, "Could not initialize player: " + throwable.getMessage());
-                    }
-                });
-            } else {
-                Log.i(TAG, "Not able to identify user");
-            }
-        }
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        Uri uri = intent.getData();
-        if (uri != null) {
-            final AuthenticationResponse response = AuthenticationResponse.fromUri(uri);
-            switch (response.getType()) {
-                // Response was successful and contains auth token
-                case TOKEN:
-                    Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
-                    Spotify.getPlayer(playerConfig, this, new SpotifyPlayer.InitializationObserver() {
-                        @Override
-                        public void onInitialized(SpotifyPlayer spotifyPlayer) {
-                            mPlayer = spotifyPlayer;
-                            mPlayer.addConnectionStateCallback(MainActivity.this);
-                            mPlayer.addNotificationCallback(MainActivity.this);
-                            token = response.getAccessToken();
-                        }
-
-                        @Override
-                        public void onError(Throwable throwable) {
-                            Log.e(TAG, "Could not initialize player: " + throwable.getMessage());
-                        }
-                    });
-                    break;
-                // Auth flow returned an error
-                case ERROR:
-                    // Handle error response
-                    break;
-
-                // Most likely auth flow was cancelled
-                default:
-                    break;
-                // Handle other cases
-            }
-        }
-    }
-
     @Override
     protected void onDestroy() {
         Log.i(TAG, "onDestroy");
@@ -532,282 +455,11 @@ public class MainActivity extends Activity implements
     }
 
 
-    @Override
-    public void onPlaybackEvent(PlayerEvent playerEvent) {
-        Log.d("MainActivity", "Playback event received: " + playerEvent.name());
-        switch (playerEvent) {
-            // Handle event type as necessary
-            case kSpPlaybackNotifyPlay:
-                pause = false;
-                mPlayerControl.setImageResource(R.drawable.baseline_pause_24);
-                break;
-            case kSpPlaybackNotifyPause:
-                pause = true;
-                mPlayerControl.setImageResource(R.drawable.baseline_play_arrow_24);
-                break;
-            case kSpPlaybackNotifyPrev:
-                try {
-                    prevSelected = true;
-                    if (!shuffle) {
-                        int newPosition = currentSelected - 1;
-                        if (newPosition >= 0) {
-                            Song song = (Song) listView.getAdapter().getItem(newPosition);
-                            currentSongPlaying = song;
-                            mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-                            Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
-                            currentSelected = newPosition;
-                            mPlayer.refreshCache();
-                            mPlayer.playUri(null, song.getTrackValue(), 0, 0);
-                        } else {
-                            currentSelected = 0;
-                            Song song = (Song) listView.getAdapter().getItem(currentSelected);
-                            currentSongPlaying = song;
-                            mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-                            Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
-                            mPlayer.playUri(null, song.getTrackValue(), 0, 0);
-                        }
-                    } else {
-                        selectRandomSong();
-                    }
-                    selectedPosition = currentSelected;
-                    songBaseAdapter.notifyDataSetChanged();
-                } catch (Exception e) {
-                    Log.e(TAG, e.toString());
-                }
-                break;
-            case kSpPlaybackNotifyAudioDeliveryDone:
-                try {
-                    if (!prevSelected) {
-                        if (!shuffle) {
-                            int newPosition = currentSelected + 1;
-                            if (newPosition <= songList.size() - 1) {
-                                Song song = (Song) listView.getAdapter().getItem(newPosition);
-                                currentSongPlaying = song;
-                                mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-                                Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
-                                currentSelected = newPosition;
-                                mPlayer.refreshCache();
-                                mPlayer.playUri(null, song.getTrackValue(), 0, 0);
-                            } else {
-                                currentSelected = 0;
-                                Song song = (Song) listView.getAdapter().getItem(currentSelected);
-                                currentSongPlaying = song;
-                                mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-                                Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
-                                mPlayer.playUri(null, song.getTrackValue(), 0, 0);
-                            }
-                        } else {
-                            selectRandomSong();
-                        }
-                        selectedPosition = currentSelected;
-                        songBaseAdapter.notifyDataSetChanged();
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, e.toString());
-                }
-                prevSelected = false;
-                break;
-            default:
-                break;
-        }
-    }
-
-
-    @Override
-    public void onPlaybackError(Error error) {
-        Log.d(TAG, "Playback error received: " + error.name());
-        switch (error) {
-            // Handle error type as necessary
-            default:
-                break;
-        }
-    }
-
-    @Override
-    public void onLoggedIn() {
-        Log.d(TAG, "User logged in");
-        if(!authenticate) {
-            db.restoreDB();
-            try {
-                String myUrl = "https://api.spotify.com/v1/me/tracks";
-                //String to place our result in
-                String result;
-                //Instantiate new instance of our class
-                HttpGetRequest getRequest = new HttpGetRequest();
-                //Perform the doInBackground method, passing in our url
-                result = getRequest.execute(myUrl).get();
-                authenticate = true;
-            } catch (InterruptedException e) {
-                Log.e(TAG, e.toString());
-            } catch (ExecutionException e) {
-                Log.e(TAG, e.toString());
-            }
-        }
-        else
-        {
-            songList = db.getAllSongs();
-            showScreen();
-        }
-
-    }
-
-
-    @Override
-    public void onLoggedOut() {
-        Log.d(TAG, "User logged out");
-    }
-
-    @Override
-    public void onLoginFailed(Error var1) {
-        Log.d(TAG, "Login failed");
-    }
-
-    @Override
-    public void onTemporaryError() {
-
-        Log.d(TAG, "Temporary error occurred");
-
-    }
-
-    @Override
-    public void onConnectionMessage(String message) {
-        Log.d(TAG, "Received connection message: " + message);
-    }
-
     public void goToSettings(View view) {
         Intent intent = new Intent(getApplicationContext(), MyPreferencesActivity.class);
         startActivity(intent);
     }
 
-    public class HttpGetRequest extends AsyncTask<String, Void, String> {
-        public static final String REQUEST_METHOD = "GET";
-        public static final int READ_TIMEOUT = 15000;
-        public static final int CONNECTION_TIMEOUT = 15000;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            progressBar.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            String stringUrl = params[0];
-            String result = getString(R.string.NoConnection);
-            try {
-                //Create a URL object holding our url
-                URL myUrl = new URL(stringUrl);
-                //Create a connection
-                HttpURLConnection connection = (HttpURLConnection)
-                        myUrl.openConnection();
-
-                //Set methods and timeouts
-                connection.setRequestMethod(REQUEST_METHOD);
-                connection.setReadTimeout(READ_TIMEOUT);
-                connection.setConnectTimeout(CONNECTION_TIMEOUT);
-                connection.setUseCaches(true);
-
-                connection.setRequestProperty("Authorization", "Bearer " + token);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.addRequestProperty("Cache-Control", "max-age=0");
-
-                connection.setRequestMethod("GET");
-
-                //Connect to our url
-                connection.connect();
-
-                if (connection.getResponseCode() == 200) {
-                    InputStream responseBody = connection.getInputStream();
-                    InputStreamReader responseBodyReader =
-                            new InputStreamReader(responseBody, "UTF-8");
-                    //Create object mapper object and map JSON that is retrieved into an Arraylist of POJO we created called Music_Results
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    //If property is unknown, mark it as ok so application does not crash
-                    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                    objectMapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
-
-
-                    UserLibrary userLibrary = objectMapper.readValue(responseBodyReader, UserLibrary.class);
-
-                    for (Items item : userLibrary.getItems()) {
-                        Song song = new Song();
-                        Track track = item.getTrack();
-                        song.setAlbum(track.getAlbum().getName());
-                        song.setSongLength(track.getDuration_ms());
-                        Album album = track.getAlbum();
-                        song.setAlbumImage(album.getImages()[0].getUrl());
-                        song.setAlbumID(album.getId());
-                        song.setReleaseDate(track.getAlbum().getRelease_date());
-                        StringBuilder artists = new StringBuilder();
-                        ArrayList<String> artistUris = new ArrayList<>();
-                        for (Artists artist : track.getArtists()) {
-                            artists.append(artist.getName() + ", ");
-                            artistUris.add(artist.getUri());
-                        }
-                        final String allArtists = artists.toString().replaceAll(", $", "");
-                        song.setArtist(allArtists);
-                        song.setTrackValue(track.getUri());
-                        song.setTrackName(track.getName());
-                        song.setArtistUri(artistUris);
-
-                        db.insertSong(song);
-                        songList.add(song);
-                    }
-                    return userLibrary.getNext();
-                } else {
-                    return result;
-                }
-            } catch (IOException e) {
-                Log.e(TAG, e.toString());
-                return result;
-            } catch (Exception e) {
-                Log.e(TAG, e.toString());
-                return result;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            if (result == null || result.equals("null") || result.equals(getString(R.string.NoConnection))) {
-                fab.setVisibility(View.VISIBLE);
-                shuffleButton.setVisibility(View.VISIBLE);
-                progressBar.setVisibility(View.INVISIBLE);
-                songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
-                listView.setAdapter(songBaseAdapter);
-                showRateDialog();
-
-                db.printAllSongs();
-            } else {
-                try {
-                    //Some url endpoint that you may have
-                    String myUrl = result;
-                    //Instantiate new instance of our class
-                    HttpGetRequest getRequest = new HttpGetRequest();
-                    //Perform the doInBackground method, passing in our url
-                    getRequest.execute(myUrl).get();
-                } catch (InterruptedException e) {
-                    Log.e(TAG, e.toString());
-                    showScreen();
-                } catch (ExecutionException e) {
-                    Log.e(TAG, e.toString());
-                    showScreen();
-                }
-            }
-        }
-
-
-    }
-
-    private void showScreen() {
-        fab.setVisibility(View.VISIBLE);
-        shuffleButton.setVisibility(View.VISIBLE);
-        progressBar.setVisibility(View.INVISIBLE);
-        songBaseAdapter = new SongBaseAdapter(MainActivity.this, songList);
-        listView.setAdapter(songBaseAdapter);
-        showRateDialog();
-    }
 
     FloatingActionButton fab;
 
@@ -1035,8 +687,7 @@ public class MainActivity extends Activity implements
     private void playGivenSong(Song song, int i) {
         currentSongPlaying = song;
         mSelectedTrackTitle.setText(song.getTrackName() + " ~ " + song.getArtist());
-        Log.i(TAG, "Song Image: " + song.getAlbumImage());
-        Picasso.with(MainActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
+        Picasso.with(SongLibraryActivity.this).load(song.getAlbumImage()).into(mSelectedTrackImage);
         currentSelected = i;
         mPlayer.playUri(null, song.getTrackValue(), 0, 0);
         selectedPosition = i;

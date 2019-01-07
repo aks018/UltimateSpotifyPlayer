@@ -16,6 +16,35 @@ public class Song implements Serializable {
     String songLength;
     String albumID;
 
+
+    public Song(){
+        this.artist = "";
+        this.trackName = "";
+        this.trackValue ="";
+        this.album = "";
+        this.releaseDate ="";
+        this.albumImage = "";
+        this.getTotalArtistTracks = "";
+        this.artistUri = new ArrayList<>();
+        this.songLength = "";
+        this.albumID = "";
+    }
+
+    public Song(String songURI, String artist, String trackName, String album, String releaseDate, String totalArtistTracks,
+                String songLength, String albumID, String albumImage, List<String> artistUri){
+        this.trackValue = songURI;
+        this.artist = artist;
+        this.trackName=trackName;
+        this.album = album;
+        this.releaseDate = releaseDate;
+        this.getTotalArtistTracks = totalArtistTracks;
+        this.songLength = songLength;
+        this.artistUri = artistUri;
+        this.albumImage = albumImage;
+        this.albumID = albumID;
+
+    }
+
     public String getArtist() {
         return artist;
     }

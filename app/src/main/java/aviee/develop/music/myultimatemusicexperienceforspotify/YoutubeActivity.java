@@ -273,4 +273,13 @@ public class YoutubeActivity extends YouTubeBaseActivity implements YouTubePlaye
 
         }
     }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        Intent i = new Intent(this, SongLibraryActivity.class);
+        startActivity(i);
+
+    }
 }

@@ -41,7 +41,8 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
         <activity android:name=".DisplaySong" />
         <activity android:name=".MyPreferencesActivity" />
-        <activity android:name=".AlarmActivity"></activity>
+        <activity android:name=".AlarmActivity" />
+        <activity android:name=".SongLibraryActivity"></activity>
     </application>
 
 </manifest>
