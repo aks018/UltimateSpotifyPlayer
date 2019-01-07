@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
@@ -50,6 +51,7 @@ import com.spotify.sdk.android.authentication.SpotifyNativeAuthUtil;
 import com.spotify.sdk.android.player.Config;
 import com.spotify.sdk.android.player.ConnectionStateCallback;
 import com.spotify.sdk.android.player.Error;
+import com.spotify.sdk.android.player.Metadata;
 import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.PlayerEvent;
 import com.spotify.sdk.android.player.Spotify;
@@ -103,7 +105,7 @@ public class MainActivity extends Activity implements
     public static ImageView mPlayerControl;
     Toolbar toolbar;
     static int currentSelected = 0;
-    boolean pause;
+    public static boolean pause;
     SearchView searchView;
     public static int selectedPosition = -100;
     public static Song currentSongPlaying;
@@ -228,7 +230,9 @@ public class MainActivity extends Activity implements
                                 break;
                             case R.id.action_alarms:
                                 Intent i = new Intent(getApplicationContext(), AlarmActivity.class);
+
                                 startActivity(i);
+
                         }
                         return true;
                     }

@@ -85,13 +85,6 @@ public class DisplaySong extends AppCompatActivity {
 
         setupSeekBar();
 
-        if (MainActivity.stayWithinApplication) {
-            mediaPlayController.setImageResource(R.drawable.baseline_pause_circle_filled_black_48);
-        } else {
-            mediaPlayController.setImageResource(R.drawable.baseline_play_circle_filled_white_black_48);
-        }
-
-
     }
 
     private void shuffle() {
@@ -214,46 +207,7 @@ public class DisplaySong extends AppCompatActivity {
         }
     }
 
-   /* @Override
-    protected void onResume() {
-        super.onResume();
-        Log.i(TAG, "onResume");
-        MainActivity.stayWithinApplication = false;
-        if (MainActivity.mPlayer != null) {
-            MainActivity.mPlayer.resume(new Player.OperationCallback() {
-                @Override
-                public void onSuccess() {
 
-                }
-
-                @Override
-                public void onError(Error error) {
-
-                }
-            });
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.i(TAG, "onPause");
-        if (!MainActivity.stayWithinApplication) {
-            if (MainActivity.mPlayer != null) {
-                MainActivity.mPlayer.pause(new Player.OperationCallback() {
-                    @Override
-                    public void onSuccess() {
-
-                    }
-
-                    @Override
-                    public void onError(Error error) {
-
-                    }
-                });
-            }
-        }
-    }*/
 
     @Override
     protected void onDestroy() {
@@ -264,15 +218,6 @@ public class DisplaySong extends AppCompatActivity {
         super.onDestroy();
     }
 
-    /*@Override
-    protected void onStop() {
-        super.onStop();
-        Log.i(TAG, "onStop");
-        HttpResponseCache cache = HttpResponseCache.getInstalled();
-        if (cache != null) {
-            cache.flush();
-        }
-    }*/
 
     public void previousOnClick(View view) {
         if (MainActivity.mPlayer != null) {
